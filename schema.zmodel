@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+
+model Categoria {
+    id_categoria Int      @id @default(autoincrement())
+    nome_categoria String 
+
+    registros Registro[]
+}
+
+model Cliente {
+    id_cliente Int      @id @default(autoincrement())
+    nome_cliente String 
+    contato      String? 
+
+    obras Obra[]
+}
+
+model Obra {
+    id_obra                 Int      @id @default(autoincrement())
+    cod_obra                String?  @unique 
+    nome_obra               String   
+    id_cliente              Int?
+    data_inicio             DateTime?
+    total_horas_planejadas  Float    @default(0)
+    data_inicio_planejamento DateTime?
+    data_fim_planejamento   DateTime?
+    observacoes_planejamento String? 
+
+    cliente   Cliente?  @relation(fields: [id_cliente], references: [id_cliente])
+    registros Registro[]
+}
+
+model Pessoa {
+    id_nome       Int      @id @default(autoincrement())
+    nome          String   
+    funcao        String?  
+    email         String?  
+    hourlyRate    Float?    @default(10.0)
+    data_criacao  DateTime @default(now())
+    ativo         Boolean  @default(true)
+
+    registros Registro[]
+}
+
+model Registro {
+    id_registro     Int      @id @default(autoincrement())
+    timestamp       DateTime
+    id_nome         Int
+    id_obra         Int
+    id_tipo_tarefa  Int
+    id_categoria    Int
+    duracao_minutos Int      @default(60)
+
+    pessoa      Pessoa      @relation(fields: [id_nome], references: [id_nome])
+    obra        Obra        @relation(fields: [id_obra], references: [id_obra])
+    tipoTarefa  TipoTarefa  @relation(fields: [id_tipo_tarefa], references: [id_tipo_tarefa])
+    categoria   Categoria   @relation(fields: [id_categoria], references: [id_categoria])
+}
+
+model TipoTarefa {
+    id_tipo_tarefa Int      @id @default(autoincrement())
+    nome_tipo      String   
+
+    registros Registro[]
+}
+
+model User {
+  id       Int    @id @default(autoincrement())
+  name    String @unique
+  password String
+  role     String @default("user")
+}
