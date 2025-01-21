@@ -132,8 +132,10 @@ export default function Costs() {
     };
   
     return (
-      <div className="p-4">
-        <div className="flex justify-between items-center mb-4">
+      // <div className="p-4">
+      <div className="w-full min-w-full px-2 ml-1">
+        {/* <div className="flex justify-between items-left mb-4"> */}
+        <div className="flex justify-between items-center w-full mb-4 gap-4">
           <h2 className="text-2xl font-bold">Análise de Custos e Horas</h2>
           <div className="space-x-2">
             <ButtonComponent 
@@ -157,8 +159,10 @@ export default function Costs() {
           </div>
         </div>
   
-        <div className="overflow-x-auto">
-          <table className="min-w-full table-auto">
+        {/* <div className="overflow-x-auto"> */}
+        <div className="overflow-x-auto w-full">
+          {/* <table className="min-w-full table-auto"> */}
+          <table className="w-full table-auto border-collapse">
             <thead>
               <tr>
                 <th className="px-4 py-2">

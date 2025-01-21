@@ -29,6 +29,7 @@ import '@syncfusion/ej2-lists/styles/material.css';
 import '@syncfusion/ej2-navigations/styles/material.css';
 import '@syncfusion/ej2-popups/styles/material.css';
 import '@syncfusion/ej2-react-schedule/styles/material.css';
+import '@syncfusion/ej2-react-grids/styles/material.css';
 
 import { loadCldr, L10n} from '@syncfusion/ej2-base';
 // import ptNumberData from '@syncfusion/ej2-cldr-data/main/pt/numbers.json';
@@ -79,9 +80,9 @@ export default function App() {
   return (
     <div className="flex">
       <Sidebar />
-      <main className="ml-64 flex-1 p-8">
+      {/* <main className="ml-64 flex-1 p-8"> */}
         <Outlet />
-      </main>
+      {/* </main> */}
     </div>
   );
 }

@@ -9,7 +9,10 @@ import {
   ColumnDirective,
   Inject,
   Page,
-  Toolbar,
+  Toolbar,  
+  SelectionSettingsModel,
+  Selection,
+  SelectionMode    
 } from "@syncfusion/ej2-react-grids";
 import {
   ChartComponent,
@@ -44,7 +47,7 @@ export const loader = async () => {
   return json({ registros, groupedData, nomesFuncionarios });
 };
 
-export default function ProjetoHoras() {
+export default function ProjetoHoras() {    
   const { registros, groupedData, nomesFuncionarios } = useLoaderData();
   const [funcionarioSelecionado, setFuncionarioSelecionado] = useState("");
 
@@ -72,6 +75,8 @@ export default function ProjetoHoras() {
     nome_obra: obra,
     horas_totais: _.sumBy(registros, "horas_trabalhadas") / 60,
   }));
+
+  const selectionSettings : SelectionSettingsModel= { mode: 'Row', type: 'Single' };
 
   return (
     <div className="container mx-auto p-4">
@@ -118,7 +123,11 @@ export default function ProjetoHoras() {
         {/* Tabela de Dados */}
         <div>
           <h2 className="text-xl font-semibold mb-2">Detalhamento por Projeto</h2>
-          <GridComponent dataSource={dadosFiltrados} allowPaging={true} toolbar={["Search"]}>
+          <GridComponent           
+          dataSource={dadosFiltrados} 
+          selectionSettings={selectionSettings}  
+          allowPaging={true}                     
+          >
             <ColumnsDirective>
               {/* <ColumnDirective field="nome" headerText="Funcionário" width="150" /> */}
               <ColumnDirective field="data_hora" headerText="Data" width="200" />
@@ -127,7 +136,7 @@ export default function ProjetoHoras() {
               <ColumnDirective field="nome_tipo" headerText="Tipo de Tarefa" width="250" />
               {/* <ColumnDirective field="horas_trabalhadas" headerText="Horas Trabalhadas" width="150" textAlign="Right" /> */}
             </ColumnsDirective>
-            <Inject services={[Page, Toolbar]} />
+            <Inject services={[Page, Toolbar, Selection]} />
           </GridComponent>
         </div>
 
