@@ -9,8 +9,8 @@ import { LoaderFunctionArgs , redirect } from "@remix-run/node";
 import { requireAdmin } from "~/auth.server";
 
 
-export async function loader({ request }: LoaderFunctionArgs ) {
-  try {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  
     // // Verifica se o usuário está autenticado
     await requireAdmin(request);
 
@@ -31,18 +31,8 @@ export async function loader({ request }: LoaderFunctionArgs ) {
     `;
 
     // Retorna os registros no formato JSON
-    return json({ registros });
-  } catch (error) {
-    // Captura e retorna erros adequados
-    return json(
-      {
-        error: "Erro ao carregar os dados",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 }
-    );
-  }
-}
+    return ({ registros });
+  };
 
 export default function Costs() {
     const { registros } = useLoaderData<typeof loader>();

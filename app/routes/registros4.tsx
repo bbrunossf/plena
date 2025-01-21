@@ -32,13 +32,13 @@ export const loader = async () => {
       t.nome_tipo,
       p.hourlyRate,
       p.nome,
-      strftime (r.timestamp) AS data_hora,
+      DATETIME (r.timestamp) AS data_hora,
       r.duracao_minutos AS horas_trabalhadas 
     FROM Registro r
     INNER JOIN Obra o ON r.id_obra = o.id_obra
     INNER JOIN TipoTarefa t ON r.id_tipo_tarefa = t.id_tipo_tarefa
     INNER JOIN Pessoa p ON r.id_nome = p.id_nome   
-    ORDER BY o.nome_obra, t.nome_tipo
+    ORDER BY r.timestamp DESC, t.nome_tipo
   `;
 
   const groupedData = _.groupBy(registros, "nome_obra");

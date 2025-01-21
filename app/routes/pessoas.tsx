@@ -2,8 +2,13 @@ import { Form, useLoaderData } from "@remix-run/react";
 import { prisma } from "~/db.server";
 import {type ClientActionFunctionArgs } from "@remix-run/react";
 import { useState } from "react";
+import { LoaderFunctionArgs } from "@remix-run/node";
+import { requireAdmin } from "~/auth.server";
 
-export const loader = async () => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+    // Add admin check
+    await requireAdmin(request);
+    
     const pessoas = await prisma.pessoa.findMany({
       select: {
         id_nome: true,

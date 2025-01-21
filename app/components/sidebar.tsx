@@ -6,15 +6,9 @@ export default function Sidebar() {
   const links = [
     { to: '/', label: 'Home' },
     { to: '/pessoas', label: 'Funcionários' },        
-    { to: '/obras', label: 'Obras' },
-    { to: '/costs', label: 'Custos1' },
-	  { to: '/costs2', label: 'Custos2' },
-	  { to: '/costs3', label: 'Custos3' },
-    { to: '/costs4', label: 'Custos4' },
-    { to: '/costs5', label: 'Custos5' },
-    { to: '/registros', label: 'Registros1' },
-    { to: '/registros2', label: 'Registros2' },
-    { to: '/registros4', label: 'Registros4' },
+    { to: '/obras', label: 'Obras' },    
+    { to: '/costs5', label: 'Custos' },    ,
+    { to: '/registros4', label: 'Registros' },
     { to: '/agenda', label: 'Agenda' },
     
   ];
