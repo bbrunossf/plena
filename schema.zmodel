@@ -36,6 +36,7 @@ model Obra {
 
     cliente   Cliente?  @relation(fields: [id_cliente], references: [id_cliente])
     registros Registro[]
+    entregas  Agenda[] // Relacionamento inverso
 }
 
 model Pessoa {
@@ -77,4 +78,17 @@ model User {
   name    String @unique
   password String
   role     String @default("user")
+}
+
+model Agenda {
+  id                 Int      @id @default(autoincrement())
+  titulo             String
+  descricao          String?
+  data_hora_inicio   DateTime @default(now())
+  data_hora_termino  DateTime
+  dia_inteiro        Boolean  @default(true)
+  id_obra            Int 
+  Obra               Obra?     @relation(fields: [id_obra], references: [id_obra]) // Relacionamento explícito 
+  criadoEm           DateTime @default(now())
+  atualizadoEm       DateTime @updatedAt
 }

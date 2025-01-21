@@ -37,7 +37,8 @@ export const loader = async () => {
     FROM Registro r
     INNER JOIN Obra o ON r.id_obra = o.id_obra
     INNER JOIN TipoTarefa t ON r.id_tipo_tarefa = t.id_tipo_tarefa
-    INNER JOIN Pessoa p ON r.id_nome = p.id_nome   
+    INNER JOIN Pessoa p ON r.id_nome = p.id_nome
+    WHERE r."timestamp" > "2025-01-01"   
     ORDER BY r.timestamp DESC, t.nome_tipo
   `;
 
@@ -71,10 +72,25 @@ export default function ProjetoHoras() {
     "count"
   );
 
-  const chartData = Object.entries(_.groupBy(dadosFiltrados, "nome_obra")).map(([obra, registros]) => ({
+  // const chartData = Object.entries(_.groupBy(dadosFiltrados, "nome_obra")).map(([obra, registros]) => ({
+  //   nome_obra: obra,
+  //   horas_totais: _.sumBy(registros, "horas_trabalhadas") / 60,      
+  // }));
+
+  const obrasData = Object.entries(_.groupBy(dadosFiltrados, "nome_obra")).map(([obra, registros]) => ({
     nome_obra: obra,
     horas_totais: _.sumBy(registros, "horas_trabalhadas") / 60,
   }));
+  
+  const totalGeralData = [
+    {
+      nome_obra: "Total Geral",
+      horas_totais: _.sumBy(dadosFiltrados, "horas_trabalhadas") / 60,
+    },
+  ];
+  
+
+
 
   const selectionSettings : SelectionSettingsModel= { mode: 'Row', type: 'Single' };
 
@@ -130,9 +146,9 @@ export default function ProjetoHoras() {
           >
             <ColumnsDirective>
               {/* <ColumnDirective field="nome" headerText="Funcionário" width="150" /> */}
-              <ColumnDirective field="data_hora" headerText="Data" width="200" />
-              <ColumnDirective field="cod_obra" headerText="Obra" width="100" />
-              <ColumnDirective field="nome_obra" headerText="Projeto" width="150" />
+              <ColumnDirective field="data_hora" headerText="Data" width="180" />
+              <ColumnDirective field="cod_obra" headerText="Obra" width="80" />
+              <ColumnDirective field="nome_obra" headerText="Projeto" width="180" />
               <ColumnDirective field="nome_tipo" headerText="Tipo de Tarefa" width="250" />
               {/* <ColumnDirective field="horas_trabalhadas" headerText="Horas Trabalhadas" width="150" textAlign="Right" /> */}
             </ColumnsDirective>
@@ -143,16 +159,40 @@ export default function ProjetoHoras() {
         {/* Gráfico */}
         <div>
           <h2 className="text-xl font-semibold mb-2">Resumo de Horas por Projeto</h2>
-          <ChartComponent primaryXAxis={{ valueType: "Category" }} legendSettings={{ visible: true }} tooltip={{ enable: true }}>
+          <ChartComponent 
+          primaryXAxis={{ valueType: "Category" }}
+          primaryYAxis={{ title: "Horas Trabalhadas" }}
+          axes={[
+            {
+              name: "secondaryAxis",
+              opposedPosition: true, // Coloca o eixo no lado direito
+              title: "Total Geral",
+              labelFormat: "{value} h",
+            },
+          ]}
+          legendSettings={{ visible: true }}
+          tooltip={{ enable: true }}
+          >
             <SeriesCollectionDirective>
-              <SeriesDirective
-                dataSource={chartData}
-                xName="nome_obra"
-                yName="horas_totais"
-                name="Horas Trabalhadas"
-                type="Column"
-              />
-            </SeriesCollectionDirective>
+            {/* Série para as obras */}
+            <SeriesDirective
+              dataSource={obrasData}
+              xName="nome_obra"
+              yName="horas_totais"
+              name="Horas Trabalhadas"
+              type="Column"
+            />
+            {/* Série para o Total Geral */}
+            <SeriesDirective
+              dataSource={totalGeralData}
+              xName="nome_obra"
+              yName="horas_totais"
+              name="Total Geral"
+              type="Column"
+              yAxisName="secondaryAxis" // Eixo secundário
+              fill="blue" // Cor da barra
+            />
+          </SeriesCollectionDirective>
             <Inject services={[ColumnSeries, Category, Legend, Tooltip]} />
           </ChartComponent>
         </div>
