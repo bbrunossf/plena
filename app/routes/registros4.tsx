@@ -23,6 +23,14 @@ import {
   Legend,
   Tooltip,
 } from "@syncfusion/ej2-react-charts";
+import { PieSeries, AccumulationLegend, AccumulationTooltip,
+    AccumulationChartComponent, AccumulationSeriesCollectionDirective, AccumulationSeriesDirective,
+    IAccLoadedEventArgs, AccumulationTheme, AccumulationDataLabel
+} from "@syncfusion/ej2-react-charts";
+
+
+
+
 
 export const loader = async () => {
   const registros = await prisma.$queryRaw`
@@ -48,13 +56,29 @@ export const loader = async () => {
   return json({ registros, groupedData, nomesFuncionarios });
 };
 
+
+
 export default function ProjetoHoras() {    
   const { registros, groupedData, nomesFuncionarios } = useLoaderData();
   const [funcionarioSelecionado, setFuncionarioSelecionado] = useState("");
+  const [obraSelecionada, setObraSelecionada] = useState("");
 
-  const dadosFiltrados = funcionarioSelecionado
-    ? registros.filter((registro) => registro.nome === funcionarioSelecionado)
-    : registros;
+  const obrasDisponiveis = funcionarioSelecionado
+    ? _.uniqBy(
+        registros.filter((r) => r.nome === funcionarioSelecionado),
+        "nome_obra"
+      ).map((r) => r.nome_obra)
+    : _.uniqBy(registros, "nome_obra").map((r) => r.nome_obra);
+    
+  // const dadosFiltrados = funcionarioSelecionado
+  //   ? registros.filter((registro) => registro.nome === funcionarioSelecionado)
+  //   : registros;
+  const dadosFiltrados = registros.filter((registro) => {
+    if (funcionarioSelecionado && registro.nome !== funcionarioSelecionado) return false;
+    if (obraSelecionada && registro.nome_obra !== obraSelecionada) return false;
+    return true;
+  });
+  
 
   const totalObras = _.uniqBy(dadosFiltrados, "nome_obra").length;
   const projetoMaisTrabalhado = _.maxBy(
@@ -88,7 +112,32 @@ export default function ProjetoHoras() {
       horas_totais: _.sumBy(dadosFiltrados, "horas_trabalhadas") / 60,
     },
   ];
+
+  const tipoTarefaData = (() => {
+    const data = Object.entries(_.groupBy(dadosFiltrados, "nome_tipo"))
+      .map(([tipo, registros]) => ({
+        tipo,
+        horas: _.sumBy(registros, "horas_trabalhadas") / 60,
+      }));
+      
+    const totalHoras = _.sumBy(data, "horas");
+    
+    return data.map(item => ({
+      ...item,
+      percentual: (item.horas / totalHoras) * 100,
+    }));
+  })();
   
+
+  
+//   const onChartLoad = (args: IAccLoadedEventArgs): void => {
+//     document.getElementById('pie-chart').setAttribute('title', '');
+// };
+// const load = (args: IAccLoadedEventArgs): void => {
+//     let selectedTheme: string = location.hash.split('/')[1];
+//     selectedTheme = selectedTheme ? selectedTheme : 'Fluent2';
+//     args.accumulation.theme = (selectedTheme.charAt(0).toUpperCase() + selectedTheme.slice(1)).replace(/-dark/i, "Dark").replace(/light/i, "Light").replace(/contrast/i,'Contrast').replace(/-highContrast/i, 'HighContrast') as AccumulationTheme;
+// };
 
 
 
@@ -116,6 +165,25 @@ export default function ProjetoHoras() {
           ))}
         </select>
       </div>
+
+    <div className="mb-4">
+      <label htmlFor="obra" className="block text-lg font-semibold mb-2">
+        Selecionar Obra
+      </label>
+      <select
+        id="obra"
+        value={obraSelecionada}
+        onChange={(e) => setObraSelecionada(e.target.value)}
+        className="w-full p-2 border rounded"
+      >
+        <option value="">Todas</option>
+        {obrasDisponiveis.map((obra) => (
+          <option key={obra} value={obra}>
+            {obra}
+          </option>
+        ))}
+      </select>
+    </div>
 
       {/* Métricas principais */}
       <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -156,7 +224,7 @@ export default function ProjetoHoras() {
           </GridComponent>
         </div>
 
-        {/* Gráfico */}
+        {/* Gráfico1 */}
         <div>
           <h2 className="text-xl font-semibold mb-2">Resumo de Horas por Projeto</h2>
           <ChartComponent 
@@ -196,6 +264,43 @@ export default function ProjetoHoras() {
             <Inject services={[ColumnSeries, Category, Legend, Tooltip]} />
           </ChartComponent>
         </div>
+
+        {/* Gráfico2 */}
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold mb-2">Distribuição por Tipo de Tarefa</h2>
+          
+          <AccumulationChartComponent 
+            id='pie-chart' 
+            title='Distribuição de Horas no projeto selecionado'             
+            legendSettings={{ visible: true }} 
+            enableSmartLabels={true} 
+            enableAnimation={true} 
+            center={{ x: '50%', y: '50%' }} 
+            enableBorderOnMouseMove={true} 
+            tooltip={{ enable: true,                 
+                  enableHighlight: false}}            
+          >
+            <Inject services={[AccumulationLegend, PieSeries, AccumulationTooltip, AccumulationDataLabel]} />
+            
+            <AccumulationSeriesCollectionDirective>            
+            <AccumulationSeriesDirective 
+              dataSource={tipoTarefaData}
+              xName="tipo"
+              yName="horas"
+              type="Pie"
+              dataLabel={{
+                visible: true,
+                name: 'text',
+                position: 'Outside',
+                template: '${point.x}: ${point.y}h (${point.percentual}%)',
+                font: { fontWeight: '600' },
+                connectorStyle:{ length : '20px' ,type: 'Curve'}
+              }}              
+              />
+            </AccumulationSeriesCollectionDirective>
+          </AccumulationChartComponent>
+        </div>
+
       </div>
     </div>
   );

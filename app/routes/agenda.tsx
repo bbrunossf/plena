@@ -1,5 +1,5 @@
-// Uma agenda para colocar as datas de início e fim dos projetos
-// e datas de entrega das coisas? (aí precisa de outra tabela no banco de dados)
+// 'delete' ainda dá erro, mas apaga. Possivelmente tem que fazer o delete Raw
+
 
 import { useEffect, useRef } from 'react';
 import { extend } from '@syncfusion/ej2-base';
@@ -23,7 +23,7 @@ import {
   TimelineViews, TimelineMonth,
   ResourcesDirective, ResourceDirective  
 } from '@syncfusion/ej2-react-schedule';
-
+import { Prisma } from '@prisma/client';
 
 
 export const loader = async () => {  
@@ -101,44 +101,72 @@ export const loader = async () => {
       return formattedDate.toISOString().split("T")[0];
   }
 
-  function formatToISO(dateString) {
-    const date = new Date(dateString); // Converte a string em um objeto Date
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0'); // Mês começa em 0
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const seconds = String(date.getSeconds()).padStart(2, '0');
-    // return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-    return new Date(`${year}-${month}-${day}`);
+//   function formatToISO(dateString) {
+//     const date = new Date(dateString); // Converte a string em um objeto Date
+//     const year = date.getFullYear();
+//     const month = String(date.getMonth() + 1).padStart(2, '0'); // Mês começa em 0
+//     const day = String(date.getDate()).padStart(2, '0');
+//     const hours = String(date.getHours()).padStart(2, '0');
+//     const minutes = String(date.getMinutes()).padStart(2, '0');
+//     const seconds = String(date.getSeconds()).padStart(2, '0');
+//     // return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+//     return new Date(`${year}-${month}-${day}`);
+// }
+
+//funcao para pegar data e hora no formato ISO, e criar um objeto Date
+function myfunc(dateString) {
+  const x = new Date (dateString);
+  return x;
 }
   
     try {
       switch (actionType) {
         case 'create':          
-          const newEvent = await prisma.agenda.create({
-            data: {
-              titulo: subject.toString(),
-              descricao: description?.toString() || '',
-              data_hora_inicio: formatToISO(startTime),
-              data_hora_termino: formatToISO(endTime),
-              dia_inteiro: isAllDay,
-              id_obra: 15 // salvando o id da obra
-            }
-          });
+          // const newEvent = await prisma.agenda.create({
+          //   data: {
+          //     titulo: subject.toString(),
+          //     descricao: description?.toString() || '',
+          //     data_hora_inicio: formatToISO(startTime),
+          //     data_hora_termino: formatToISO(endTime),
+          //     dia_inteiro: isAllDay,
+          //     id_obra: 15 // salvando o id da obra
+          //   }
+          // });
+          // return json(newEvent);           
+          const data_hora_inicio_convert = myfunc(startTime).toISOString().replace("T", " ").replace(".000Z", "");
+          const data_hora_termino_convert = myfunc(endTime).toISOString().replace("T", " ").replace(".000Z", "");
+          const atualizadoEm_convert = myfunc(startTime).toISOString().replace("T", " ").replace(".000Z", "");
+
+          const newEvent = await prisma.$executeRaw(
+            Prisma.sql`INSERT INTO agenda (titulo, descricao, data_hora_inicio, data_hora_termino, dia_inteiro, id_obra, atualizadoEm)
+                       VALUES (${subject.toString()}, ${description?.toString() || ''}, ${data_hora_inicio_convert}, ${data_hora_termino_convert}, ${isAllDay}, ${15}, ${atualizadoEm_convert})`
+          );
+  
           return json(newEvent);
+          
         case 'update':
-        const updatedEvent = await prisma.agenda.update({
-          where: { id: parseInt(id, 10) },
-          data: {
-            titulo: subject.toString(),
-            data_hora_inicio: formatToISO(startTime),
-            data_hora_termino: formatToISO(endTime),
-            dia_inteiro: isAllDay,
-            //id_obra: parseInt(formData.get("ObraId"), 10), // salvando o id da obra
-          }
-        });
+        // const updatedEvent = await prisma.agenda.update({
+        //   where: { id: parseInt(id, 10) },
+        //   data: {
+        //     titulo: subject.toString(),
+        //     data_hora_inicio: formatToISO(startTime),
+        //     data_hora_termino: formatToISO(endTime),
+        //     dia_inteiro: isAllDay,
+        //     //id_obra: parseInt(formData.get("ObraId"), 10), // salvando o id da obra
+        //   }
+        // });
+        // return json(updatedEvent);
+        const updatedEvent = await prisma.$executeRaw(
+          Prisma.sql`UPDATE agenda
+                     SET titulo = ${subject.toString()},
+                      descricao = ${description?.toString() || ''},
+                      data_hora_inicio = ${myfunc(startTime).toISOString().replace("T", " ").replace(".000Z", "")}, 
+                      data_hora_termino = ${myfunc(endTime).toISOString().replace("T", " ").replace(".000Z", "")}, 
+                      dia_inteiro = ${isAllDay}
+                     WHERE id = ${parseInt(id, 10)}`
+        );      
         return json(updatedEvent);
+
         case 'delete':
         const deletedEvent = await prisma.agenda.delete({
           where: { id: parseInt(id, 10) }
@@ -232,7 +260,8 @@ export default function SchedulePage() {
                 eventSettings={{ 
                   dataSource: eventos
                 }}
-              actionComplete={onActionComplete}   
+              actionComplete={onActionComplete} 
+              agendaDaysCount={30}  
                 >
                 <ResourcesDirective>
                 <ResourceDirective field='Obra' title='Cod Obra' name='Obra' allowMultiple={false}
@@ -243,7 +272,7 @@ export default function SchedulePage() {
                 <ViewDirective option='Day' />  
                 <ViewDirective option='Week' />                
                 <ViewDirective option='Month' />
-                <ViewDirective option='Agenda' />
+                <ViewDirective option='Agenda' allowVirtualScrolling={true}/>                
                 <ViewDirective option='TimelineDay' />
                 <ViewDirective option='TimelineMonth' />
                 </ViewsDirective>

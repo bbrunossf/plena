@@ -45,10 +45,10 @@ CREATE TABLE "Registro" (
     "id_tipo_tarefa" INTEGER NOT NULL,
     "id_categoria" INTEGER NOT NULL,
     "duracao_minutos" INTEGER NOT NULL DEFAULT 60,
-    CONSTRAINT "Registro_id_nome_fkey" FOREIGN KEY ("id_nome") REFERENCES "Pessoa" ("id_nome") ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT "Registro_id_obra_fkey" FOREIGN KEY ("id_obra") REFERENCES "Obra" ("id_obra") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "Registro_id_categoria_fkey" FOREIGN KEY ("id_categoria") REFERENCES "Categoria" ("id_categoria") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "Registro_id_tipo_tarefa_fkey" FOREIGN KEY ("id_tipo_tarefa") REFERENCES "TipoTarefa" ("id_tipo_tarefa") ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT "Registro_id_categoria_fkey" FOREIGN KEY ("id_categoria") REFERENCES "Categoria" ("id_categoria") ON DELETE RESTRICT ON UPDATE CASCADE
+    CONSTRAINT "Registro_id_obra_fkey" FOREIGN KEY ("id_obra") REFERENCES "Obra" ("id_obra") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "Registro_id_nome_fkey" FOREIGN KEY ("id_nome") REFERENCES "Pessoa" ("id_nome") ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -57,5 +57,30 @@ CREATE TABLE "TipoTarefa" (
     "nome_tipo" TEXT NOT NULL
 );
 
+-- CreateTable
+CREATE TABLE "User" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "name" TEXT NOT NULL,
+    "password" TEXT NOT NULL,
+    "role" TEXT NOT NULL DEFAULT 'user'
+);
+
+-- CreateTable
+CREATE TABLE "Agenda" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "titulo" TEXT NOT NULL,
+    "descricao" TEXT,
+    "data_hora_inicio" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "data_hora_termino" DATETIME NOT NULL,
+    "dia_inteiro" BOOLEAN NOT NULL DEFAULT true,
+    "id_obra" INTEGER NOT NULL,
+    "criadoEm" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "atualizadoEm" DATETIME NOT NULL,
+    CONSTRAINT "Agenda_id_obra_fkey" FOREIGN KEY ("id_obra") REFERENCES "Obra" ("id_obra") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "Obra_cod_obra_key" ON "Obra"("cod_obra");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_name_key" ON "User"("name");
