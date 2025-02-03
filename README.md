@@ -1,40 +1,21 @@
-# Welcome to Remix!
+# Sistema de Gerenciamento de Horas de Projetos
 
-- 📖 [Remix docs](https://remix.run/docs)
+## Resumo
 
-## Development
+Painel em Remix que consolida os dados armazenados em um banco de dados SQLite, com apontamento de horas por projeto.
+Possui login para proteger rotas com dados relativos aos custos, e painel para acompanhar o lançamento de horas.
 
-Run the dev server:
 
-```shellscript
-npm run dev
-```
+## Rotas e arquivos acessórios
 
-## Deployment
 
-First, build your app for production:
+## O que pode ser aproveitado
 
-```sh
-npm run build
-```
 
-Then run the app in production mode:
 
-```sh
-npm start
-```
-
-Now you'll need to pick a host to deploy it to.
-
-### DIY
-
-If you're familiar with deploying Node applications, the built-in Remix app server is production-ready.
-
-Make sure to deploy the output of `npm run build`
-
-- `build/server`
-- `build/client`
-
-## Styling
-
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever css framework you prefer. See the [Vite docs on css](https://vitejs.dev/guide/features.html#css) for more information.
+## O que pode melhorar
+* Um login por pessoa;
+* Retirar o botão 'excluir' do painel de controle das obras, e deixar apenas o 'Adicionar' e 'Editar';
+* A navegação do painel de acompanhamento de horas, e o gráfico de pizza;
+* Apresentar a distribuição de horas pelo segundo nível (revisão/execução/etc);
+* Cálculo das datas e formatação das datas
