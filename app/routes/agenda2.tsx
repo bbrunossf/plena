@@ -28,7 +28,9 @@ import { Prisma } from '@prisma/client';
 import { LiaBirthdayCakeSolid } from "react-icons/lia";
 import { Cell } from '@syncfusion/ej2-react-grids';
 
-
+// const onEventRendered = (args: any) => {
+//     args.element.style.whiteSpace = 'normal !important'; // Ajusta o texto para quebrar em várias linhas
+// };
 
 export const loader = async () => {  
     try {
@@ -198,11 +200,12 @@ export default function SchedulePage() {
   const eventTemplate = (props: any) => {
     const hasBirthday = props.Subject.toLowerCase().includes('aniversario');
     console.log(hasBirthday);
+  
 
     return (
-      <div className="e-template-wrap">
-        {hasBirthday && <LiaBirthdayCakeSolid style={{ marginRight: '5px' }} />}
-        {props.Subject}
+      <div className="e-template-wrap" >
+        {hasBirthday && <LiaBirthdayCakeSolid style={{ marginRight: '5px', color: 'red' }} />}
+        {props.Subject }
       </div>
     );
   };
@@ -273,15 +276,17 @@ export default function SchedulePage() {
         <div style={{ flex: 3 }}>          
         <ScheduleComponent 
                 width='100%' 
-                height='550px' 
+                height='650px' 
                 selectedDate={new Date()} 
-                // cssClass='cell-template'
+                cssClass='cell-template'
                 // cellTemplate={cellTemplate}
                 //eventTemplate={eventTemplate}
+				rowAutoHeight= {true}
                 currentView='Month'                
                 eventSettings={{ 
                   dataSource: eventos,
-                  template: eventTemplate
+                  template: eventTemplate,
+				  enableMaxHeight: true
                 }}
               actionComplete={onActionComplete} 
               agendaDaysCount={30}
