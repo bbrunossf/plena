@@ -1,0 +1,19 @@
+.e-schedule .e-month-view .e-appointment {
+    height : fit-content !important; /* Evita height fixo */
+    display: flex !important; /* Habilita flexbox para layout fluido */
+    white-space: normal !important; /* aqui funcionou, parece que só essa resolve */
+}
+
+.e-schedule .e-appointment .e-lib .e-draggable .e-appointment-details {
+    white-space: normal !important;
+    height: fit-content !important; /* Evita height fixo */
+    overflow: visible !important;    
+    word-wrap: break-word !important;    
+}
+
+
+/* Verde pastel para eventos entregues. Sem adicionar nada, dá certo, mas só preenche a largura do texto (ainda fica um azul por tras) */
+.e-custom-delivered  {
+    background: #98FB98 !important;
+    border-color: #32CD32 !important;
+}
