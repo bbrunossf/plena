@@ -20,7 +20,7 @@ import type { LinksFunction } from "@remix-run/node";
 import Sidebar from "~/components/sidebar";
 
 import "./tailwind.css";
-import "./cell-template.css";
+//import "./cell-template.css";
 import '@syncfusion/ej2-base/styles/material.css';
 import '@syncfusion/ej2-buttons/styles/material.css';
 import '@syncfusion/ej2-calendars/styles/material.css';

@@ -198,13 +198,14 @@ export default function SchedulePage() {
 
     // Função para personalizar o conteúdo do evento
   const eventTemplate = (props: any) => {
-    const hasBirthday = props.Subject.toLowerCase().includes('aniversario');
+    const hasBirthday = props.Subject.toLowerCase().includes('');
     console.log(hasBirthday);
   
 
     return (
-      <div className="e-template-wrap" >
-        {hasBirthday && <LiaBirthdayCakeSolid style={{ marginRight: '5px', color: 'red' }} />}
+      <div className="e-template-wrap" style={{whiteSpace: 'normal !important', height: 'fit-content', lineBreak: 'anywhere', fontSize: '13px', fontWeight: 'bold'}}>
+        {hasBirthday && <LiaBirthdayCakeSolid style={
+          { marginRight: '5px', color: 'red', whiteSpace: 'normal !important', height: 'fit-content'}} />}
         {props.Subject }
       </div>
     );
@@ -278,7 +279,7 @@ export default function SchedulePage() {
                 width='100%' 
                 height='650px' 
                 selectedDate={new Date()} 
-                cssClass='cell-template'
+                // cssClass='cell-template'
                 // cellTemplate={cellTemplate}
                 //eventTemplate={eventTemplate}
 				rowAutoHeight= {true}
