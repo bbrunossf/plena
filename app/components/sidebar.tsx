@@ -8,7 +8,7 @@ export default function Sidebar() {
     { to: '/pessoas', label: 'Funcionários' },        
     { to: '/obras', label: 'Obras' },    
     { to: '/costs5', label: 'Custos' },    ,
-    { to: '/registros4', label: 'Registros' },
+    { to: '/registros', label: 'Registros' },
     { to: '/agenda', label: 'Agenda' },
 	{ to: '/converter2', label: 'Conversor de Datas' },
   { to: '/tutorial_conversor', label: 'Tutorial de Conversão de Datas' },

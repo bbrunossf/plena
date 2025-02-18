@@ -131,7 +131,7 @@ export default function ProjetoHoras() {
     const data = Object.entries(_.groupBy(dadosFiltrados, "nome_tipo"))
       .map(([tipo, registros]) => ({
         tipo,
-        horas: _.sumBy(registros, "horas_trabalhadas") / 60,
+        horas: _.round((_.sumBy(registros, "horas_trabalhadas") / 60), 2),
       }));
       
     const totalHoras = _.sumBy(data, "horas");
@@ -331,9 +331,17 @@ export default function ProjetoHoras() {
 		<TreeMapComponent
         dataSource={treeMapData}
         weightValuePath='valor'
-		palette= {['red','green', 'blue', 'orange', 'white']} //assim deu certo; com colormapping fica tudo preto
+		equalColorValuePath='categoria'
+		//palette= {['red','green', 'blue', 'orange', 'white']} //assim deu certo; com colormapping fica tudo preto
         leafItemSettings={{
           labelPath: 'categoria',
+		  colorMapping: [
+          {            value: 'Conferência',            color: '#D3D3B3'          },
+          {            value: 'Execução',            color: '#A9A9F9'          },
+		  {            value: 'Orçamento',            color: '#8080C0'          },
+		  {            value: 'Planejamento',            color: '#B34D6D'          },
+		  {            value: 'Revisão',            color: '#B34D31'          },		  
+        ],		
 				  
         }}
 		
