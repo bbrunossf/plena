@@ -1,5 +1,6 @@
 //inclusão da Categoria na consulta e nos graficos
 // ainda falta resolver as cores e os tooltips
+// Os dados para o treemap estão passados certos agora, somados, mas falta arredondar os valores em 2 casas decimais
 //ref: <https://ej2.syncfusion.com/react/documentation/treemap/getting-started?cs-save-lang=1&cs-lang=ts>
 
 import { json } from "@remix-run/node";
@@ -33,6 +34,9 @@ import { PieSeries, AccumulationLegend, AccumulationTooltip,
 } from "@syncfusion/ej2-react-charts";
 import { TreeMapComponent, LevelsDirective, LevelDirective, Inject, TreeMapTooltip } from '@syncfusion/ej2-react-treemap';
 
+//importação do css para o TreeMapComponent. Nao resolveu
+import '@syncfusion/ej2-base/styles/material.css';
+import '@syncfusion/ej2-react-treemap/node_modules/@syncfusion/ej2-base/styles/material.css';
 
 
 
@@ -138,11 +142,19 @@ export default function ProjetoHoras() {
     }));
   })();
   
-// Mapear os dados para o formato esperado pelo TreeMap
-  const treeMapData = dadosFiltrados.map((registro) => ({
-    categoria: registro.nome_categoria,
-    valor: registro.horas_trabalhadas,
+// Mapear os dados para o formato esperado pelo TreeMap, mas sem somar os valores
+  // const treeMapData = dadosFiltrados.map((registro) => ({
+    // categoria: registro.nome_categoria,
+    // valor: registro.horas_trabalhadas,
+  // }));
+  // console.log(treeMapData)
+  
+  const treeMapData = Object.entries(_.groupBy(dadosFiltrados, "nome_categoria"))
+  .map(([categoria, registros]) => ({
+    categoria,
+    valor: _.sumBy(registros, "horas_trabalhadas") / 60, // Soma das horas por categoria
   }));
+  console.log(treeMapData)
   
 //   const onChartLoad = (args: IAccLoadedEventArgs): void => {
 //     document.getElementById('pie-chart').setAttribute('title', '');
@@ -322,26 +334,11 @@ export default function ProjetoHoras() {
         leafItemSettings={{
           labelPath: 'categoria',
 		  colorMapping: [
-          {
-            value: 'Conferência',
-            color: '#D3D3D3',
-          },
-          {
-            value: 'Execução',
-            color: '#A9A9A9',
-          },
-		  {
-            value: 'Orçamento',
-            color: '#808080',
-          },
-		  {
-            value: 'Planejamento',
-            color: '#B34D6D',
-          },
-		  {
-            value: 'Revisão',
-            color: '#B34D6D',
-          },		  
+          {value: 'Conferência', color: 'blue'},
+          {value: 'Execução', color: 'green'},
+		  {value: 'Orçamento', color: 'orange'},
+		  {value: 'Planejamento', color: 'red'},
+		  {value: 'Revisão', color: 'white'},		  
         ],		
         }}
 		tooltipSettings={{
