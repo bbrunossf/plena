@@ -1,6 +1,6 @@
 //inclusão da Categoria na consulta e nos graficos
-// ainda falta resolver as cores e os tooltips
-// Os dados para o treemap estão passados certos agora, somados, mas falta arredondar os valores em 2 casas decimais
+// resolvidas as cores mas sem usar o colormapping
+// dados somados e arredondados
 //ref: <https://ej2.syncfusion.com/react/documentation/treemap/getting-started?cs-save-lang=1&cs-lang=ts>
 
 import { json } from "@remix-run/node";
@@ -152,7 +152,7 @@ export default function ProjetoHoras() {
   const treeMapData = Object.entries(_.groupBy(dadosFiltrados, "nome_categoria"))
   .map(([categoria, registros]) => ({
     categoria,
-    valor: _.sumBy(registros, "horas_trabalhadas") / 60, // Soma das horas por categoria
+    valor: _.round((_.sumBy(registros, "horas_trabalhadas") / 60), 2), // Soma das horas por categoria
   }));
   console.log(treeMapData)
   
@@ -331,24 +331,22 @@ export default function ProjetoHoras() {
 		<TreeMapComponent
         dataSource={treeMapData}
         weightValuePath='valor'
+		palette= {['red','green', 'blue', 'orange', 'white']} //assim deu certo; com colormapping fica tudo preto
         leafItemSettings={{
           labelPath: 'categoria',
-		  colorMapping: [
-          {value: 'Conferência', color: 'blue'},
-          {value: 'Execução', color: 'green'},
-		  {value: 'Orçamento', color: 'orange'},
-		  {value: 'Planejamento', color: 'red'},
-		  {value: 'Revisão', color: 'white'},		  
-        ],		
+				  
         }}
+		
 		tooltipSettings={{
           visible: true,
           format: '${categoria}: ${valor} horas'
         }}
       >
+	  {/*
         <LevelsDirective>
           <LevelDirective groupPath='categorias' headerTemplate='${categoria}' />
         </LevelsDirective>
+		*/}
         <Inject services={[TreeMapTooltip]} />
       </TreeMapComponent>
 		</div>
