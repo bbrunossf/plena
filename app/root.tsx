@@ -3,7 +3,9 @@ import { registerLicense } from '@syncfusion/ej2-base';
 //import pkg from '@syncfusion/ej2-base';
 //const {registerLicense} = pkg;
 
-registerLicense('Ngo9BigBOggjHTQxAR8/V1NMaF5cXmBCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdmWX5fdXVWR2RYVUVwXEA=');
+//registerLicense('Ngo9BigBOggjHTQxAR8/V1NMaF5cXmBCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdmWX5fdXVWR2RYVUVwXEA=');
+//registerLicense('Ngo9BigBOggjHTQxAR8/V1NDaF5cWWtCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWH5ceXRcRmNfUUJ0VkE=');
+registerLicense('Ngo9BigBOggjHTQxAR8/V1NMaF1cW2hIfEx1RHxQdld5ZFRHallYTnNWUj0eQnxTdEBjW35XcXBXQmNbUEJ1Wg==');
 
 //import { cssBundleHref } from "@remix-run/css-bundle";
 
@@ -32,14 +34,21 @@ import '@syncfusion/ej2-popups/styles/material.css';
 import '@syncfusion/ej2-react-schedule/styles/material.css';
 import '@syncfusion/ej2-react-grids/styles/material.css';
 
+
+import '@syncfusion/ej2-gantt/styles/material.css';
+import '@syncfusion/ej2-grids/styles/material.css';
+import '@syncfusion/ej2-layouts/styles/material.css';
+import '@syncfusion/ej2-splitbuttons/styles/material.css';
+import '@syncfusion/ej2-treegrid/styles/material.css';
+
 import { loadCldr, L10n} from '@syncfusion/ej2-base';
 // import ptNumberData from '@syncfusion/ej2-cldr-data/main/pt/numbers.json';
 // import pttimeZoneData from '@syncfusion/ej2-cldr-data/main/pt/timeZoneNames.json';
 // import ptGregorian from '@syncfusion/ej2-cldr-data/main/pt/ca-gregorian.json';
 // import ptNumberingSystem from '@syncfusion/ej2-cldr-data/supplemental/numberingSystems.json';
 
-import "../node_modules/@syncfusion/ej2-base/styles/material.css";
-import "../node_modules/@syncfusion/ej2-buttons/styles/material.css";
+// import "../node_modules/@syncfusion/ej2-base/styles/material.css";
+// import "../node_modules/@syncfusion/ej2-buttons/styles/material.css";
 
 export const links: LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
