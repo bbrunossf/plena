@@ -193,37 +193,59 @@ function myfunc(dateString) {
 export default function SchedulePage() {            
     //const { eventos, db_obras } = useLoaderData<typeof loader>();
 	const loaderData = useLoaderData<typeof loader>();
-	console.log("Eventos no loaderData:", loaderData);
+	//console.log("Eventos no loaderData:", loaderData);
     //const [eventos2, setEventos] = useState([]); // Estado local para gerenciar os eventos
     const [eventos, setEventos] = useState(loaderData); // inicialize o estado com os dados do loader
     //const resourceData = db_obras;
 
 
-	const eventTemplate = (data: any) => {
-	  const handleChange = (args: { checked: boolean }) => {
-		const updatedData = { ...data, entregue: args.checked };
+	// const eventTemplate = (data: any) => {
+	//   const handleChange = (args: { checked: boolean }) => {
+	// 	const updatedData = { ...data, entregue: args.checked };
 		
-		// Atualiza o estado dos eventos
-		setEventos(prevEventos => 
-		  prevEventos.map(evento => 
-			evento.Id === data.Id ? updatedData : evento
-		  )
-		);
-	  };
+	// 	// Atualiza o estado dos eventos
+	// 	setEventos(prevEventos => 
+	// 	  prevEventos.map(evento => 
+	// 		evento.Id === data.Id ? updatedData : evento
+	// 	  )
+	// 	);
+	//   };
+  //   //console.log("Data no template:", data.entregue);
 
-	  return (
-		<div className={`e-template-wrap ${data.entregue ? 'e-custom-delivered' : ''}`}>
-		  <CheckBoxComponent 
-			checked={data.entregue || false}
-			change={handleChange} 
-			label="Entregue?"
-		  />
-		  <div className="e-appointment-details">
-			{data.Subject}
-		  </div>
-		</div>
-	  );
-	};
+	//   return (
+	// 	<div className={`e-template-wrap ${data.entregue ? 'e-custom-delivered' : ''}`}>
+	// 	  <CheckBoxComponent 
+	// 		checked={data.entregue || false}
+	// 		change={handleChange} 
+	// 		label="Entregue?"
+	// 	  />
+	// 	  <div className="e-appointment-details">
+	// 		{data.Subject}
+	// 	  </div>
+	// 	</div>
+	//   );
+	// };
+  const eventTemplate = (props: EventRenderedArgs) => {
+    const [isChecked, setIsChecked] = useState(props.entregue || false);
+  
+    const handleCheckboxChange = () => {
+      // Atualiza apenas o estado local para controle visual imediato
+      setIsChecked(!isChecked);
+    };
+  
+    return (
+      <div className={`e-template-wrap  ${isChecked ? 'e-custom-delivered' : ''}`}>
+        {/* <div className="flex items-center gap-1"> */}
+          <CheckBoxComponent 
+            checked={isChecked} 
+            change={handleCheckboxChange}
+            //cssClass="e-custom-checkbox"
+          />
+          {props.Subject}
+        {/* </div> */}
+      </div>
+    );
+  };
   
 
     const onActionComplete = async (args) => {
@@ -299,6 +321,7 @@ export default function SchedulePage() {
                   dataSource: eventos,
                   template: eventTemplate,
                   fields: {
+                    id: 'Id',
                     isDelivered: 'entregue' // Mapeamento do campo
                 },
                   enableMaxHeight: true

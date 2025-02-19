@@ -91,4 +91,6 @@ model Agenda {
   Obra               Obra?     @relation(fields: [id_obra], references: [id_obra]) // Relacionamento explícito 
   criadoEm           DateTime @default(now())
   atualizadoEm       DateTime @updatedAt
+  entregue           Boolean? @default(false) // Campo opcional
+  entregue_em        DateTime? // Campo opcional
 }
