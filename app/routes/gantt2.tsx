@@ -1,26 +1,44 @@
 //teste2, ultima versao
+import "../tailwind.css";
+import '@syncfusion/ej2-base/styles/material.css';
+import '@syncfusion/ej2-buttons/styles/material.css';
+import '@syncfusion/ej2-calendars/styles/material.css';
+import '@syncfusion/ej2-dropdowns/styles/material.css';
+import '@syncfusion/ej2-gantt/styles/material.css';
+import '@syncfusion/ej2-grids/styles/material.css';
+import '@syncfusion/ej2-inputs/styles/material.css';
+import '@syncfusion/ej2-layouts/styles/material.css';
+import '@syncfusion/ej2-lists/styles/material.css';
+import '@syncfusion/ej2-navigations/styles/material.css';
+import '@syncfusion/ej2-popups/styles/material.css';
+import '@syncfusion/ej2-splitbuttons/styles/material.css';
+import '@syncfusion/ej2-treegrid/styles/material.css';
+
+import { data, json } from "@remix-run/node";
+import { redirect } from "@remix-run/node";
+import { useLoaderData } from "@remix-run/react";
+import { useFetcher } from "@remix-run/react";
+import taskService from "~/services/taskService";
+
+import { GanttComponent, ColumnsDirective, ColumnDirective, Inject, Selection, EditSettingsModel } from '@syncfusion/ej2-react-gantt';
+import { Edit, Toolbar, ToolbarItem } from '@syncfusion/ej2-react-gantt';
+import { DayMarkers, ContextMenu, Reorder,  ColumnMenu, Filter, Sort } from '@syncfusion/ej2-react-gantt';
+
+import { useRef } from 'react';
+import { useState } from 'react';
 
 import { DataManager, WebApiAdaptor } from "@syncfusion/ej2-data";
 import { DatePickerComponent } from '@syncfusion/ej2-react-calendars';
 
-import { useRef, useState } from 'react';
-import { data, json } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
-import { useFetcher, useLoaderData } from "@remix-run/react";
 
-import taskService from "~/services/taskService";
-import { PrismaClient } from "@prisma/client";
 
-import { GanttComponent, ColumnsDirective, ColumnDirective, Inject, Selection, EditSettingsModel, 
-  Edit, Toolbar,  DayMarkers, ContextMenu, Reorder
-} from '@syncfusion/ej2-react-gantt';
 
 // export async function loader() {
 //   const tasks = await taskService.listTasks();
 //   console.log("tarefas encontradas", tasks);
 //   return ({ tasks });
 // }
-
+import { PrismaClient } from "@prisma/client";
 // Cria uma instância do Prisma Client
 const prisma = new PrismaClient();
 
@@ -38,7 +56,7 @@ const prisma = new PrismaClient();
  const tasksWithId = tasks.map((task: any, index: number) => ({
   TaskID: task.id,
     taskName: task.taskName,
-    StartDate: new Date(task.startDate).toISOString().split('T')[0],
+    StartDate: new Date(task.startDate),//.toISOString().split('T')[0],
     EndDate: new Date(task.endDate).toISOString().split('T')[0],
     Duration: task.duration,
     Progress: task.progress,
@@ -56,11 +74,14 @@ return ({ tasks: tasksWithId });
  }
 
 
-export default function GanttPage() {  
+
+
+export default function GanttPage() {
   const ganttRef = useRef<GanttComponent>(null);
   const fetcher = useFetcher();
   const [showPasteModal, setShowPasteModal] = useState(false); // Estado para controlar o modal
   const [pasteData, setPasteData] = useState(''); // Estado para armazenar os dados colados
+
 
   const dataManager : DataManager = new DataManager({    
     url: '/api/save-gantt',
@@ -68,7 +89,7 @@ export default function GanttPage() {
     crossDomain: true
   });
 
-  const { tasks } = useLoaderData<typeof loader>();
+   const { tasks } = useLoaderData<typeof loader>();
   //console.log("tarefas encontradas no default", {dataSource});
 
   //nomes que aparecem no modal de edição da tarefa
@@ -142,9 +163,10 @@ export default function GanttPage() {
   };
 
   // Botão customizado para a toolbar
-   //toolbar={['Add', 'Edit', 'Update', 'Delete', 'Cancel', 'Indent', 'Outdent', 
-    //         'ZoomIn', 'ZoomOut', 'ExpandAll', 'CollapseAll']}
-   const customToolbarItems: any[] = [
+  // const customToolbarItems: any[]= ['Add', 'Edit', 'Update', 'Delete', 'Cancel', 'Indent', 'Outdent', 
+  //             'ZoomIn', 'ZoomOut', 'ExpandAll', 'CollapseAll']
+  //o botão de 'Add' não aparece na barra de tarefas
+  const customToolbarItems: any[] = [
     'Update', 'Delete', 'Cancel', 'Indent', 'Outdent', 
     'ZoomIn', 'ZoomOut', 'Add', 'ExpandAll', 'CollapseAll',
     { text: 'Colar Tarefas', tooltipText: 'Colar Tarefas', id: 'pasteTasks' }, 'Edit', 
@@ -203,11 +225,9 @@ const DateEditor = (props: any) => {
   const formatOption = { type: 'date', format: 'dd/MM/yyyy' };
 
   const editOptions: EditSettingsModel = {
-    allowAdding: true, //precisa para habilitar o botão de Add
-    allowEditing: true, //precisa para habilitar o botão de Edit
-    allowDeleting: true, //precisa para habilitar o botão de Delete
+    allowEditing: true,
     allowTaskbarEditing: true,
-    mode: 'Auto',        
+    mode: 'Auto',    
   };
 
   return (
@@ -222,8 +242,17 @@ const DateEditor = (props: any) => {
             height='460px'
             ref={ganttRef}
             dataSource={tasks}
-            taskFields={taskFields}            
-            
+            taskFields={taskFields}
+            allowSelection={true}
+            locale="pt"
+
+            // editSettings={{
+            //   allowAdding: true,
+            //   allowEditing: true,
+            //   allowDeleting: true,
+            //   allowTaskbarEditing: true,
+            //   mode: 'Dialog',                         
+            // }}
             editSettings={editOptions}
             
             enableContextMenu={true}   
@@ -231,11 +260,7 @@ const DateEditor = (props: any) => {
 
             actionComplete={handleActionComplete}
 
-            allowSelection={true} allowKeyboard={true}
             
-            
-
-            //toolbar={['Add', 'Edit', 'Update', 'Delete', 'Cancel', 'ZoomIn', 'ZoomOut']}
             toolbar={customToolbarItems} //ver como incluir o botão customizado e os botões padrão
             //https://ej2.syncfusion.com/react/documentation/gantt/tool-bar?cs-save-lang=1&cs-lang=ts
             toolbarClick={handleToolbarClick}
@@ -243,20 +268,20 @@ const DateEditor = (props: any) => {
 
             <ColumnsDirective>
               <ColumnDirective field='TaskID' width='80' ></ColumnDirective>
-              <ColumnDirective field='taskName' headerText='Job Name' width='250' clipMode='EllipsisWithTooltip'></ColumnDirective>
+              <ColumnDirective field='taskName'  width='250' clipMode='EllipsisWithTooltip'></ColumnDirective>
               
               <ColumnDirective 
                 field='startDate' 
                 format={formatOption}                
-                editType='datepickeredit'>                  
+                editType='datepickeredit'> 
               </ColumnDirective>
 
               <ColumnDirective field='duration'></ColumnDirective>
               <ColumnDirective field='progress'></ColumnDirective>
               {/* <ColumnDirective field='Predecessor'></ColumnDirective> */}
             </ColumnsDirective>
-
-            <Inject services={[Selection, DayMarkers, Edit, Toolbar, ContextMenu, Reorder]} />
+            <Inject services={[Selection, Edit, Toolbar, DayMarkers, 
+            ContextMenu, Reorder,  ColumnMenu, Filter, Sort]} />
           </GanttComponent>
       </div>
 
@@ -278,8 +303,7 @@ const DateEditor = (props: any) => {
             </button>
           </div>
         </div>
-      )}
-          
+      )}  
 	  
 	  <div>
       <button onClick={handleSaveData} className="bg-blue-500 text-white p-2 rounded">

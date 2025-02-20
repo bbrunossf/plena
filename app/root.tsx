@@ -5,7 +5,10 @@ import { registerLicense } from '@syncfusion/ej2-base';
 
 //registerLicense('Ngo9BigBOggjHTQxAR8/V1NMaF5cXmBCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdmWX5fdXVWR2RYVUVwXEA=');
 //registerLicense('Ngo9BigBOggjHTQxAR8/V1NDaF5cWWtCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWH5ceXRcRmNfUUJ0VkE=');
-registerLicense('Ngo9BigBOggjHTQxAR8/V1NMaF1cW2hIfEx1RHxQdld5ZFRHallYTnNWUj0eQnxTdEBjW35XcXBXQmNbUEJ1Wg==');
+//registerLicense('Ngo9BigBOggjHTQxAR8/V1NMaF1cW2hIfEx1RHxQdld5ZFRHallYTnNWUj0eQnxTdEBjW35XcXBXQmNbUEJ1Wg==');
+//registerLicense("Ngo9BigBOggjHTQxAR8/V1NMaF5cXmBCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdmWX1feXVdQ2BYU0xwWEc=");
+//registerLicense("@32382e302e30J35se7G3Td3mCvEySmTe2XvWT6MQbE7lFkwb2od0V9M=");
+registerLicense("GTIlMmhha31ifWBgaGBifGJhfGpqampzYWBpZmppZmpoMSEmPTwgIDVnEzQ+Mjo/fTA8Pg==");
 
 //import { cssBundleHref } from "@remix-run/css-bundle";
 
