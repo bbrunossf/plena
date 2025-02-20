@@ -11,8 +11,10 @@ import { useFetcher, useLoaderData } from "@remix-run/react";
 import taskService from "~/services/taskService";
 import { PrismaClient } from "@prisma/client";
 
+
+
 import { GanttComponent, ColumnsDirective, ColumnDirective, Inject, Selection, EditSettingsModel, 
-  Edit, Toolbar,  DayMarkers, ContextMenu, Reorder
+  Edit, Toolbar,  DayMarkers, ContextMenu
 } from '@syncfusion/ej2-react-gantt';
 
 // export async function loader() {
@@ -159,10 +161,22 @@ export default function GanttPage() {
   
 
   //para exibir a resposta do componente após uma ação
+  // const handleActionComplete = async (args: any) => {
+  //   if (args.data) {
+  //     console.log("Ação completada:", args.requestType, args.data);
+  //     //estranho, quando uso o 'Update' da barra de tarefa, a ação no 'args.data' é undefined
+  //   }
+  // }
   const handleActionComplete = async (args: any) => {
-    if (args.data) {
-      console.log("Ação completada:", args.requestType, args.data);
-      //estranho, quando uso o 'Update' da barra de tarefa, a ação no 'args.data' é undefined
+    if (args.requestType === 'delete') {
+      const deletedTaskIds = args.data.map((task: any) => task.TaskID);
+      fetcher.submit(
+        { 
+          deletedTasks: JSON.stringify(deletedTaskIds),
+          action: 'delete'
+        },
+        { method: "post", action: "/api/save-gantt" }
+      );
     }
   }
 
@@ -232,7 +246,8 @@ const DateEditor = (props: any) => {
             actionComplete={handleActionComplete}
 
             allowSelection={true} allowKeyboard={true}
-            
+
+            locale="pt"           
             
 
             //toolbar={['Add', 'Edit', 'Update', 'Delete', 'Cancel', 'ZoomIn', 'ZoomOut']}
@@ -256,7 +271,7 @@ const DateEditor = (props: any) => {
               {/* <ColumnDirective field='Predecessor'></ColumnDirective> */}
             </ColumnsDirective>
 
-            <Inject services={[Selection, DayMarkers, Edit, Toolbar, ContextMenu, Reorder]} />
+            <Inject services={[Selection, DayMarkers, Edit, Toolbar, ContextMenu]} />
           </GanttComponent>
       </div>
 

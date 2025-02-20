@@ -24,18 +24,72 @@ function flattenTasks(tasks: any[]): any[] {
   return flat;
 }
 
+// export const action: ActionFunction = async ({ request }) => {
+//   try {
+//     // Supondo que o DataManager envia os dados via formData com campo "data"
+//     const formData = await request.formData();
+//     const dataJson = formData.get("data");
+//     //console.log("Dados recebidos:", dataJson); //ok, recebeu os dados em json
+//     if (!dataJson) {
+//       throw new Error("Nenhum dado recebido");
+//     }
+//     const tasks = JSON.parse(dataJson);
+    
+//     // Processa cada tarefa para atualizar ou inserir no banco
+//     for (const task of tasks) {
+//       await prisma.task.upsert({
+//         where: { id: task.TaskID },
+//         update: {
+//           taskName: task.taskName,
+//           startDate: new Date(task.StartDate),
+//           endDate: new Date(task.EndDate),
+//           duration: task.Duration,
+//           progress: task.Progress,
+//           parentId: task.parentId,
+//         },
+//         create: {
+//           id: task.TaskID,
+//           taskName: task.taskName,
+//           startDate: new Date(task.StartDate),
+//           endDate: new Date(task.EndDate),
+//           duration: task.Duration,
+//           progress: task.Progress,
+//           parentId: task.parentId,
+//         },
+//       });
+//     }
+
+//     return json({ success: true });
+//   } catch (error) {
+//     console.error("Erro ao salvar os dados:", error);
+//     return json({ success: false, error: error.message }, { status: 500 });
+//   }
+// };
+
 export const action: ActionFunction = async ({ request }) => {
   try {
-    // Supondo que o DataManager envia os dados via formData com campo "data"
     const formData = await request.formData();
+    const action = formData.get("action");
+
+    if (action === "delete") {
+      const deletedTaskIds = JSON.parse(formData.get("deletedTasks") as string);
+      await prisma.task.deleteMany({
+        where: {
+          id: {
+            in: deletedTaskIds
+          }
+        }
+      });
+      return json({ success: true });
+    }
+
+    // Existing upsert logic for updates/creates
     const dataJson = formData.get("data");
-    console.log("Dados recebidos:", dataJson);
     if (!dataJson) {
       throw new Error("Nenhum dado recebido");
     }
     const tasks = JSON.parse(dataJson);
     
-    // Processa cada tarefa para atualizar ou inserir no banco
     for (const task of tasks) {
       await prisma.task.upsert({
         where: { id: task.TaskID },
@@ -65,5 +119,4 @@ export const action: ActionFunction = async ({ request }) => {
     return json({ success: false, error: error.message }, { status: 500 });
   }
 };
-
    

@@ -35,8 +35,8 @@ import { PieSeries, AccumulationLegend, AccumulationTooltip,
 import { TreeMapComponent, LevelsDirective, LevelDirective, Inject, TreeMapTooltip } from '@syncfusion/ej2-react-treemap';
 
 //importação do css para o TreeMapComponent. Nao resolveu
-import '@syncfusion/ej2-base/styles/material.css';
-import '@syncfusion/ej2-react-treemap/node_modules/@syncfusion/ej2-base/styles/material.css';
+//import '@syncfusion/ej2-base/styles/material.css';
+//import '@syncfusion/ej2-react-treemap/node_modules/@syncfusion/ej2-base/styles/material.css';
 
 
 

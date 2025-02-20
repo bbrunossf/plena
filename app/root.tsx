@@ -7,8 +7,7 @@ import { registerLicense } from '@syncfusion/ej2-base';
 //registerLicense('Ngo9BigBOggjHTQxAR8/V1NDaF5cWWtCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWH5ceXRcRmNfUUJ0VkE=');
 //registerLicense('Ngo9BigBOggjHTQxAR8/V1NMaF1cW2hIfEx1RHxQdld5ZFRHallYTnNWUj0eQnxTdEBjW35XcXBXQmNbUEJ1Wg==');
 //registerLicense("Ngo9BigBOggjHTQxAR8/V1NMaF5cXmBCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdmWX1feXVdQ2BYU0xwWEc=");
-//registerLicense("@32382e302e30J35se7G3Td3mCvEySmTe2XvWT6MQbE7lFkwb2od0V9M=");
-registerLicense("GTIlMmhha31ifWBgaGBifGJhfGpqampzYWBpZmppZmpoMSEmPTwgIDVnEzQ+Mjo/fTA8Pg==");
+//registerLicense("Ngo9BigBOggjHTQxAR8/V1NMaF5cXmBCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdmWX1ccHRcRmhZV0B0XEA=");
 
 //import { cssBundleHref } from "@remix-run/css-bundle";
 
@@ -45,10 +44,83 @@ import '@syncfusion/ej2-splitbuttons/styles/material.css';
 import '@syncfusion/ej2-treegrid/styles/material.css';
 
 import { loadCldr, L10n} from '@syncfusion/ej2-base';
-// import ptNumberData from '@syncfusion/ej2-cldr-data/main/pt/numbers.json';
-// import pttimeZoneData from '@syncfusion/ej2-cldr-data/main/pt/timeZoneNames.json';
-// import ptGregorian from '@syncfusion/ej2-cldr-data/main/pt/ca-gregorian.json';
-// import ptNumberingSystem from '@syncfusion/ej2-cldr-data/supplemental/numberingSystems.json';
+import ptNumberData from '@syncfusion/ej2-cldr-data/main/pt/numbers.json';
+import pttimeZoneData from '@syncfusion/ej2-cldr-data/main/pt/timeZoneNames.json';
+import ptGregorian from '@syncfusion/ej2-cldr-data/main/pt/ca-gregorian.json';
+import ptNumberingSystem from '@syncfusion/ej2-cldr-data/supplemental/numberingSystems.json';
+
+import {setCulture} from '@syncfusion/ej2-base';
+
+loadCldr(ptNumberData, pttimeZoneData, ptGregorian, ptNumberingSystem);
+setCulture('pt');
+
+L10n.load({
+  'pt': {
+  gantt: {
+        emptyRecord: "Não há registros a serem exibidos",
+        id: "ID",
+        name: "Nome",
+        startDate: "Data de início",
+        endDate: "Data final",
+        duration: "Duração",
+        progress: "Progresso",
+        dependency: "Dependência",
+        notes: "Notas",
+        baselineStartDate: "Data de início da linha de base",
+        baselineEndDate: "Data de término da linha de base",
+        taskMode: "Modo Tarefa",
+        changeScheduleMode: "Alterar modo de programação",
+        subTasksStartDate: "Data de início das subtarefas",
+        subTasksEndDate: "Data de término das subtarefas",
+        scheduleStartDate: "Data de início da programação",
+        scheduleEndDate: "Data de término da programação",
+        auto: "Automárico",
+        manual: "Manual",
+        type: "Tipo",
+        offset: "Deslocamento",
+        resourceName: "Recursos",
+        resourceID: "ID do Recurso",
+        day: "dia",
+        hour: "hora",
+        minute: "minuto",
+        days: "dias",
+        hours: "horas",
+        minutes: "minutos",
+        generalTab: "Geral",
+        customTab: "Colunas personalizadas",
+        writeNotes: "Escrever notas",
+        addDialogTitle: "Nova tarefa",
+        editDialogTitle: "Informações da tarefa",
+        saveButton: "Salvar",
+        add: "Adicionar",
+        edit: "Editar",
+        update: "Atualizar",
+        delete: "Excluir",
+        cancel: "Cancelar",
+        search: "Procurar",
+        task: " tarefa",
+        tasks: " tarefas",
+        zoomIn: "Ampliar",
+        zoomOut: "Reduzir",
+        zoomToFit: "Zoom para ajustar",
+        excelExport: "Exportar Excel",
+        csvExport: "Exportar CSV",
+        expandAll: "Expandir todos",
+        collapseAll: "Recolher todos",
+        nextTimeSpan: "Próximo período",
+        prevTimeSpan: "Período anterior",
+        okText: "OK",
+        confirmDelete: "Tem certeza de que deseja excluir o registro?",
+        from: "A partir de",
+        to: "Para",
+        taskLink: "Link de Tarefa",
+        lag: "atraso",
+        start: "Começar",
+        finish: "Terminar",
+        enterValue: "Digite o valor",
+  }
+  }
+})
 
 // import "../node_modules/@syncfusion/ej2-base/styles/material.css";
 // import "../node_modules/@syncfusion/ej2-buttons/styles/material.css";
@@ -68,7 +140,7 @@ export const links: LinksFunction = () => [
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
