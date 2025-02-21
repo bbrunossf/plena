@@ -267,8 +267,8 @@ const DateEditor = (props: any) => {
               </ColumnDirective>
 
               <ColumnDirective field='duration'></ColumnDirective>
-              <ColumnDirective field='progress'></ColumnDirective>
-              {/* <ColumnDirective field='Predecessor'></ColumnDirective> */}
+              {/* <ColumnDirective field='progress'></ColumnDirective> */}
+              <ColumnDirective field='Predecessor'></ColumnDirective>
             </ColumnsDirective>
 
             <Inject services={[Selection, DayMarkers, Edit, Toolbar, ContextMenu]} />

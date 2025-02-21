@@ -14,8 +14,10 @@
 
 /* Verde pastel para eventos entregues. Sem adicionar nada, dá certo, mas só preenche a largura do texto (ainda fica um azul por tras) */
 /* essa classe cria uma classe para o checkbox e outra para o appointment details. Tudo que estiver dentro
-dele vai ficar com as cores definidas*/
+dele vai ficar com as cores definidas
+Posso colocar a fonte riscada?*/
 .e-custom-delivered  {
-    background: #98FB98 !important;
-    border-color: #32CD32 !important;
+    background: #da0d0d !important;
+    border-color: #da0d0d !important;    
+    text-decoration: line-through;
 }

@@ -1,13 +1,15 @@
-// 'delete' ainda dá erro, mas apaga. Possivelmente tem que fazer o delete Raw
+// acho que arrumei o erro do delete
+// copiei os trechos para o checkbox e a cor, mas está com o mesmo problema
 
 
-import { useEffect, useRef } from 'react';
+import "../schedule-custom.css"
+import { useEffect, useRef, useState } from 'react';
 import { extend } from '@syncfusion/ej2-base';
 import { Query, Predicate } from '@syncfusion/ej2-data';
-import { CheckBox } from '@syncfusion/ej2-react-buttons';
+import { CheckBoxComponent } from '@syncfusion/ej2-react-buttons';
 import { json } from "@remix-run/node";
 import { prisma } from "~/db.server";
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData, useFetcher } from "@remix-run/react";
 import React from 'react';
 import { 
   ScheduleComponent, 
@@ -21,7 +23,7 @@ import {
   ViewsDirective,
   ViewDirective,  
   TimelineViews, TimelineMonth,
-  ResourcesDirective, ResourceDirective  
+  ResourcesDirective, ResourceDirective, EventRenderedArgs, renderCell, CellTemplateArgs  
 } from '@syncfusion/ej2-react-schedule';
 import { Prisma } from '@prisma/client';
 
@@ -36,7 +38,9 @@ export const loader = async () => {
         strftime('%m-%d-%Y', data_hora_inicio) AS data_hora_inicial,
         strftime('%m-%d-%Y', data_hora_termino) AS data_hora_final,
         dia_inteiro,
-        id_obra        
+        id_obra,
+        entregue,
+        entregue_em        
         FROM Agenda         
         `
 
@@ -51,7 +55,9 @@ export const loader = async () => {
         StartTime: new Date(evento.data_hora_inicial),
         EndTime: new Date(evento.data_hora_final),
         IsAllDay: evento.dia_inteiro,        
-        ObraId: evento.id_obra  // campo personalizado para o código da obra
+        ObraId: evento.id_obra,  // campo personalizado para o código da obra
+        entregue: evento.entregue,        
+        entregue_em: evento.entregue_em,
       }));      
 
       console.log("Eventos no banco de dados:", eventos);
@@ -64,7 +70,7 @@ export const loader = async () => {
         FROM Obra
         `
 
-      return {eventos, db_obras}               
+      return eventos //{db_obras}               
     } catch (error) {
       console.error("Erro ao carregar recursos:", error);
       return ({        
@@ -89,6 +95,8 @@ export const loader = async () => {
     const id = formData.get("Id");
     const description = formData.get("Description");
     const isAllDay = formData.get("IsAllDay")  === 'true';
+    const entregue = formData.get("entregue")  === 'false';
+    const entregue_em = new Date(); //data e hora atual
     // Validação dos dados
     if (!subject || !startTime || !endTime) {
       return json({ error: "Dados inválidos" }, { status: 400 });
@@ -162,7 +170,9 @@ function myfunc(dateString) {
                       descricao = ${description?.toString() || ''},
                       data_hora_inicio = ${myfunc(startTime).toISOString().replace("T", " ").replace(".000Z", "")}, 
                       data_hora_termino = ${myfunc(endTime).toISOString().replace("T", " ").replace(".000Z", "")}, 
-                      dia_inteiro = ${isAllDay}
+                      dia_inteiro = ${isAllDay},
+                      entregue = ${entregue},
+                      entregue_em = ${myfunc(entregue_em).toISOString().replace("T", " ").replace(".000Z", "")}
                      WHERE id = ${parseInt(id, 10)}`
         );      
         return json(updatedEvent);
@@ -185,10 +195,60 @@ function myfunc(dateString) {
   };  
   
 export default function SchedulePage() {            
-    const { eventos, db_obras } = useLoaderData<typeof loader>();
+    //const { eventos, db_obras } = useLoaderData<typeof loader>();
+    const loaderData = useLoaderData<typeof loader>();
+    const [eventos, setEventos] = useState(loaderData); 
+    const fetcher = useFetcher();
 
     //const group = { resources: ['Obras'] }
-    const resourceData = db_obras;
+    //const resourceData = db_obras;
+
+    const eventTemplate = (props: EventRenderedArgs) => {
+         const [isChecked, setIsChecked] = useState(props.entregue || false);
+         const fetcher = useFetcher();
+         //console.log("propsss", props);
+      
+    //     const handleCheckboxChange = () => {
+    //       // Atualiza apenas o estado local para controle visual imediato
+    //       setIsChecked(!isChecked);
+    //     };
+    
+        const handleCheckboxChange = () => {
+          
+          const id_evento = props.Id;
+          console.log("Id do evento", id_evento);
+    
+          const newCheckedState = !isChecked; // Inverte o estado da caixa de seleção
+          const entregueEm = newCheckedState ? new Date().toISOString() : null; // Define a data atual ou null
+    
+          // Atualiza o estado local para feedback visual imediato
+          //setIsChecked(newCheckedState);      
+          console.log("Novo estado da caixa de seleção:", newCheckedState);
+          
+          fetcher.submit(
+            { 
+              id: id_evento, 
+              entregue: newCheckedState, 
+              entregue_em: entregueEm 
+            },        
+            { method: "post", action: "/api/updateEvent" }
+          );
+          //console.log("fetcher.submit:", fetcher.submit)
+        };
+      
+        return (
+          <div className={`e-template-wrap  ${isChecked ? 'e-custom-delivered' : ''}`}>
+            {/* <div className="flex items-center gap-1"> */}
+              <CheckBoxComponent 
+                checked={isChecked} 
+                change={handleCheckboxChange}
+                //cssClass="e-custom-checkbox"
+              />
+              {props.Subject}
+            {/* </div> */}
+          </div>
+        );
+       };
 
     const onActionComplete = async (args) => {
       if (args.requestType === 'eventCreated' || 
@@ -254,20 +314,28 @@ export default function SchedulePage() {
         <div style={{ flex: 3 }}>          
         <ScheduleComponent 
                 width='100%' 
-                height='550px' 
-                selectedDate={new Date()} 
+                height='650px' 
+                selectedDate={new Date()}
+                cssClass='e-schedule'                 
+                rowAutoHeight= {true}
                 currentView='Month'                
                 eventSettings={{ 
-                  dataSource: eventos
-                }}
+                  dataSource: eventos,
+                  template: eventTemplate,
+                  fields: {
+                    id: 'Id',
+                    isDelivered: 'entregue' // Mapeamento do campo
+                },
+                enableMaxHeight: true
+                        }}
               actionComplete={onActionComplete} 
               agendaDaysCount={30}  
                 >
-                <ResourcesDirective>
+                {/* <ResourcesDirective>
                 <ResourceDirective field='Obra' title='Cod Obra' name='Obra' allowMultiple={false}
                   dataSource={resourceData} textField='cod_obra' idField='id_obra'>
                 </ResourceDirective>
-              </ResourcesDirective>
+              </ResourcesDirective> */}
                 <ViewsDirective>                
                 <ViewDirective option='Day' />  
                 <ViewDirective option='Week' />                
