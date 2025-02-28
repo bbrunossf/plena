@@ -14,7 +14,7 @@ import { PrismaClient } from "@prisma/client";
 
 
 import { GanttComponent, ColumnsDirective, ColumnDirective, Inject, Selection, EditSettingsModel, 
-  Edit, Toolbar,  DayMarkers, ContextMenu
+  Edit, Toolbar,  DayMarkers, ContextMenu, RowDD
 } from '@syncfusion/ej2-react-gantt';
 
 // export async function loader() {
@@ -245,7 +245,7 @@ const DateEditor = (props: any) => {
 
             actionComplete={handleActionComplete}
 
-            allowSelection={true} allowKeyboard={true}
+            allowSelection={true} allowKeyboard={true} allowRowDragAndDrop={true} allowTaskbarDragAndDrop={true}
 
             locale="pt"           
             
@@ -271,7 +271,7 @@ const DateEditor = (props: any) => {
               <ColumnDirective field='Predecessor'></ColumnDirective>
             </ColumnsDirective>
 
-            <Inject services={[Selection, DayMarkers, Edit, Toolbar, ContextMenu]} />
+            <Inject services={[Selection, DayMarkers, Edit, Toolbar, ContextMenu, RowDD]} />
           </GanttComponent>
       </div>
 
