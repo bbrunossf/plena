@@ -73,8 +73,9 @@ export default function ProjetoHoras() {
   const { registros, groupedData, nomesFuncionarios } = useLoaderData();
   const { registros2 } = useLoaderData();
   const [funcionarioSelecionado, setFuncionarioSelecionado] = useState("");
-  const [obraSelecionada, setObraSelecionada] = useState("");
-  
+  //const [obraSelecionada, setObraSelecionada] = useState("");
+  const [obrasSelecionadas, setObrasSelecionadas] = useState<string[]>([]);
+
   
 
   const obrasDisponiveis = funcionarioSelecionado
@@ -87,11 +88,17 @@ export default function ProjetoHoras() {
   // const dadosFiltrados = funcionarioSelecionado
   //   ? registros.filter((registro) => registro.nome === funcionarioSelecionado)
   //   : registros;
+  // const dadosFiltrados = registros.filter((registro) => {
+  //   if (funcionarioSelecionado && registro.nome !== funcionarioSelecionado) return false;
+  //   if (obraSelecionada && registro.nome_obra !== obraSelecionada) return false;
+  //   return true;
+  // });
   const dadosFiltrados = registros.filter((registro) => {
     if (funcionarioSelecionado && registro.nome !== funcionarioSelecionado) return false;
-    if (obraSelecionada && registro.nome_obra !== obraSelecionada) return false;
+    if (obrasSelecionadas.length > 0 && !obrasSelecionadas.includes(registro.nome_obra)) return false;
     return true;
   });
+  
   
 
   const totalObras = _.uniqBy(dadosFiltrados, "nome_obra").length;
@@ -198,8 +205,12 @@ export default function ProjetoHoras() {
       </label>
       <select
         id="obra"
-        value={obraSelecionada}
-        onChange={(e) => setObraSelecionada(e.target.value)}
+        multiple
+        value={obrasSelecionadas}
+        onChange={(e) => {
+          const selectedOptions = Array.from(e.target.selectedOptions).map(option => option.value);
+          setObrasSelecionadas(selectedOptions);
+        }}
         className="w-full p-2 border rounded"
       >
         <option value="">Todas</option>
@@ -209,6 +220,7 @@ export default function ProjetoHoras() {
           </option>
         ))}
       </select>
+
     </div>
 
       {/* Métricas principais */}
