@@ -76,6 +76,30 @@ export default function ProjetoHoras() {
   //const [obraSelecionada, setObraSelecionada] = useState("");
   const [obrasSelecionadas, setObrasSelecionadas] = useState<string[]>([]);
 
+  // New state variables for date range filter
+  const [dataInicio, setDataInicio] = useState("");
+  const [dataFim, setDataFim] = useState("");
+
+  // Get default date range values (for initial values)
+  const getDefaultDateRange = () => {
+    if (registros && registros.length > 0) {
+      const allDates = registros.map(r => new Date(r.data_hora));
+      const minDate = new Date(Math.min(...allDates));
+      const maxDate = new Date(Math.max(...allDates));
+      
+      return {
+        min: minDate.toISOString().split('T')[0], // Format as YYYY-MM-DD
+        max: maxDate.toISOString().split('T')[0]
+      };
+    }
+    
+    return { min: "", max: "" };
+  };
+
+  // Get date range for input fields' min/max properties
+  const dateRange = getDefaultDateRange();
+
+
   
 
   const obrasDisponiveis = funcionarioSelecionado
@@ -93,12 +117,40 @@ export default function ProjetoHoras() {
   //   if (obraSelecionada && registro.nome_obra !== obraSelecionada) return false;
   //   return true;
   // });
+
+  // const dadosFiltrados = registros.filter((registro) => {
+  //   if (funcionarioSelecionado && registro.nome !== funcionarioSelecionado) return false;
+  //   if (obrasSelecionadas.length > 0 && !obrasSelecionadas.includes(registro.nome_obra)) return false;
+  //   return true;
+  // });
+  
+  // Updated filter to include date range
   const dadosFiltrados = registros.filter((registro) => {
+    // Check employee filter
     if (funcionarioSelecionado && registro.nome !== funcionarioSelecionado) return false;
+    
+    // Check project filter
     if (obrasSelecionadas.length > 0 && !obrasSelecionadas.includes(registro.nome_obra)) return false;
+    
+    // Check date range filter
+    if (dataInicio) {
+      const registroDate = new Date(registro.data_hora);
+      const startDate = new Date(dataInicio);
+      // Set time to beginning of day for comparison
+      startDate.setHours(0, 0, 0, 0);
+      if (registroDate < startDate) return false;
+    }
+    
+    if (dataFim) {
+      const registroDate = new Date(registro.data_hora);
+      const endDate = new Date(dataFim);
+      // Set time to end of day for comparison
+      endDate.setHours(23, 59, 59, 999);
+      if (registroDate > endDate) return false;
+    }
+    
     return true;
   });
-  
   
 
   const totalObras = _.uniqBy(dadosFiltrados, "nome_obra").length;
@@ -176,6 +228,22 @@ export default function ProjetoHoras() {
 
   const selectionSettings : SelectionSettingsModel= { mode: 'Row', type: 'Single' };
 
+  // Helper function to format date for display
+  const formatDateForDisplay = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString();
+  };
+
+  // Reset filters function
+  const resetFilters = () => {
+    setFuncionarioSelecionado("");
+    setObrasSelecionadas([]);
+    setDataInicio("");
+    setDataFim("");
+  };
+
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-3xl font-bold mb-4">Sua Produção</h1>
@@ -222,6 +290,59 @@ export default function ProjetoHoras() {
       </select>
 
     </div>
+
+    {/* Bloco para o filtro de datas */}
+    <div>
+          <label className="block text-lg font-semibold mb-2">
+            Intervalo de Datas
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label htmlFor="dataInicio" className="block text-sm mb-1">De:</label>
+              <input
+                type="date"
+                id="dataInicio"
+                value={dataInicio}
+                onChange={(e) => setDataInicio(e.target.value)}
+                min={dateRange.min}
+                max={dateRange.max}
+                className="w-full p-2 border rounded"
+              />
+            </div>
+            <div>
+              <label htmlFor="dataFim" className="block text-sm mb-1">Até:</label>
+              <input
+                type="date"
+                id="dataFim"
+                value={dataFim}
+                onChange={(e) => setDataFim(e.target.value)}
+                min={dataInicio || dateRange.min}
+                max={dateRange.max}
+                className="w-full p-2 border rounded"
+              />
+            </div>
+          </div>
+        </div>
+      
+
+      {/* Filtros aplicados e botão para limpar */}
+      <div className="mb-4 flex justify-between items-center">
+        <div>
+          <span className="font-semibold">Filtros Aplicados:</span> 
+          {funcionarioSelecionado && <span className="ml-2 bg-blue-100 px-2 py-1 rounded">{funcionarioSelecionado}</span>}
+          {obrasSelecionadas.length > 0 && <span className="ml-2 bg-green-100 px-2 py-1 rounded">{obrasSelecionadas.join(", ")}</span>}
+          {dataInicio && <span className="ml-2 bg-yellow-100 px-2 py-1 rounded">De: {formatDateForDisplay(dataInicio)}</span>}
+          {dataFim && <span className="ml-2 bg-yellow-100 px-2 py-1 rounded">Até: {formatDateForDisplay(dataFim)}</span>}
+          {!funcionarioSelecionado && obrasSelecionadas.length === 0 && !dataInicio && !dataFim && 
+            <span className="ml-2 text-gray-500">Nenhum</span>}
+        </div>
+        <button 
+          onClick={resetFilters}
+          className="bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded"
+        >
+          Limpar Filtros
+        </button>
+      </div>
 
       {/* Métricas principais */}
       <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
