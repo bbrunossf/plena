@@ -110,42 +110,10 @@ model Task {
   
   // Relações
   parent         Task?             @relation("TaskHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
-  subtasks       Task[]            @relation("TaskHierarchy")
-  //recurrence     RecurrencePattern? @relation(fields: [recurrenceId], references: [id])
-  //dependencies   TaskDependency[]  @relation("TaskDependencies")
-  dependenciesAsPredecessor TaskDependency[] @relation("PredecessorDependencies")
-  dependenciesAsSuccessor   TaskDependency[] @relation("SuccessorDependencies")
-  resources      TaskResource[]
-  updates        TaskUpdate[]
+  subtasks       Task[]            @relation("TaskHierarchy")  
+  resources      TaskResource[]  
 }
 
-// Novo modelo para predecessores
-model TaskDependency {
-  id             Int    @id() @default(autoincrement())
-  predecessorId  Int    // TaskID da tarefa predecessora
-  successorId    Int    // TaskID da tarefa sucessora
-  type           String // FS, SS, FF, SF
-  offset         Int?
-  offsetUnit     String?
-  
-  // Relações
-  predecessor    Task   @relation("PredecessorDependencies", fields: [predecessorId], references: [id])
-  successor      Task   @relation("SuccessorDependencies", fields: [successorId], references: [id])
-}
-
-// model RecurrencePattern {
-//   id             Int       @id @default(autoincrement())
-//   recurrenceType String    
-//   interval       Int?      @default(1)
-//   daysOfWeek     String?   // Removed @db.VarChar(20)
-//   dayOfMonth     Int?
-//   weekOfMonth    Int?
-//   month          Int?
-//   occurrenceCount Int?
-//   endDate        DateTime?
-//   excludeDates   String?   // Removed @db.Text
-//   tasks          Task[]    @relation("TaskRecurrence")
-// }
 
 model TaskResource {
   id           Int       @id @default(autoincrement())
@@ -156,13 +124,5 @@ model TaskResource {
   task         Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
 }
 
-model TaskUpdate {
-  id         Int       @id @default(autoincrement())
-  taskId     Int
-  updateDate DateTime  @default(now())
-  oldValues  String?   // Changed from Json to String
-  newValues  String?   // Changed from Json to String
 
-  task       Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
-}
 

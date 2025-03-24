@@ -70,6 +70,10 @@ export const action: ActionFunction = async ({ request }) => {
   try {
     const formData = await request.formData();
     const action = formData.get("action");
+	
+	console.log("Dados recebidos no formData:", formData);
+	console.log("Dados recebidos no action:", action);
+	
 
     if (action === "delete") {
       const deletedTaskIds = JSON.parse(formData.get("deletedTasks") as string);

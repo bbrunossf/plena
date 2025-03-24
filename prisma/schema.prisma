@@ -94,33 +94,19 @@ model Agenda {
 }
 
 model Task {
-  id                        Int              @id() @default(autoincrement())
-  taskName                  String
-  startDate                 DateTime
-  endDate                   DateTime
-  duration                  Float?           @default(0.0)
-  progress                  Float?           @default(0.0)
-  parentId                  Int?
-  isRecurring               Boolean?         @default(false)
-  recurrenceId              Int?
-  notes                     String?
-  parent                    Task?            @relation("TaskHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
-  subtasks                  Task[]           @relation("TaskHierarchy")
-  dependenciesAsPredecessor TaskDependency[] @relation("PredecessorDependencies")
-  dependenciesAsSuccessor   TaskDependency[] @relation("SuccessorDependencies")
-  resources                 TaskResource[]
-  updates                   TaskUpdate[]
-}
-
-model TaskDependency {
-  id            Int     @id() @default(autoincrement())
-  predecessorId Int
-  successorId   Int
-  type          String
-  offset        Int?
-  offsetUnit    String?
-  predecessor   Task    @relation("PredecessorDependencies", fields: [predecessorId], references: [id])
-  successor     Task    @relation("SuccessorDependencies", fields: [successorId], references: [id])
+  id           Int            @id() @default(autoincrement())
+  taskName     String
+  startDate    DateTime
+  endDate      DateTime
+  duration     Float?         @default(0.0)
+  progress     Float?         @default(0.0)
+  parentId     Int?
+  isRecurring  Boolean?       @default(false)
+  recurrenceId Int?
+  notes        String?
+  parent       Task?          @relation("TaskHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  subtasks     Task[]         @relation("TaskHierarchy")
+  resources    TaskResource[]
 }
 
 model TaskResource {
@@ -129,13 +115,4 @@ model TaskResource {
   resourceName String
   resourceRole String?
   task         Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
-}
-
-model TaskUpdate {
-  id         Int      @id() @default(autoincrement())
-  taskId     Int
-  updateDate DateTime @default(now())
-  oldValues  String?
-  newValues  String?
-  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
 }

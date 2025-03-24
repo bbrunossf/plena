@@ -28,7 +28,7 @@ const prisma = new PrismaClient();
 
  export async function loader() {
   const tasks = await prisma.task.findMany();
-  console.log("tarefas encontradasz", tasks);
+  //console.log("tarefas encontradasz", tasks);
 
   // const dataSource: DataManager = new DataManager({
   //   url: 'https://services.syncfusion.com/react/production/api/GanttData',
@@ -51,7 +51,7 @@ const prisma = new PrismaClient();
     dependencyType: task.dependencyType,
     notes: task.notes,
   }));
-  console.log("tarefas FORMATADAS", tasksWithId);
+  //console.log("tarefas FORMATADAS", tasksWithId);
 return ({ tasks: tasksWithId });
  // console.log("tarefas encontradas", json(dataSource));
  //return  tasks ;
@@ -97,7 +97,7 @@ export default function GanttPage() {
 
   const handleSave = async () => {
     const updatedData = ganttRef.current?.treeGrid.grid.dataSource;
-    console.log('Dados para salvar:', updatedData);
+    console.log('Dados para salvar - fonte handleSave:', updatedData);
     if (updatedData) {
       fetcher.submit(
         { data: JSON.stringify(updatedData) },
@@ -168,8 +168,9 @@ export default function GanttPage() {
   //   }
   // }
   const handleActionComplete = async (args: any) => {
-    if (args.requestType === 'delete') {
-      const deletedTaskIds = args.data.map((task: any) => task.TaskID);
+    console.log("Acionada função ActionComplete!!", args)
+	if (args.requestType === 'delete') {
+      const deletedTaskIds = args.data.map((task: any) => task.TaskID);	  
       fetcher.submit(
         { 
           deletedTasks: JSON.stringify(deletedTaskIds),
@@ -184,7 +185,7 @@ export default function GanttPage() {
   const handleSaveData = async () => {       
     // const updatedData = ganttRef.current?.updatedRecords; //só retorna os registros atualizados?
     const updatedData = ganttRef.current?.treeGrid.grid.dataSource; //retorna todos os registros ?    
-    console.log('Dados para salvar:', updatedData);
+    console.log('Dados para salvar - fonte handleSaveData:', updatedData);
     if (updatedData) {
       fetcher.submit(
         { data: JSON.stringify(updatedData) },

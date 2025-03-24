@@ -2,6 +2,7 @@
 // resolvidas as cores mas sem usar o colormapping
 // dados somados e arredondados
 //ref: <https://ej2.syncfusion.com/react/documentation/treemap/getting-started?cs-save-lang=1&cs-lang=ts>
+//adicionado nome concatenado para o select. Alterado na variável obrasDisponiveis e no option do 'Selecionar Obra'
 
 import { json } from "@remix-run/node";
 import { prisma } from "~/db.server";
@@ -61,7 +62,10 @@ export const loader = async () => {
     ORDER BY r.timestamp DESC, t.nome_tipo
   `;
 
-  const groupedData = _.groupBy(registros, "nome_obra");
+
+ 
+
+  const groupedData = _.groupBy(registros, "nome_obra"); 
   const nomesFuncionarios = _.uniqBy(registros, "nome").map((r) => r.nome);
 
   return json({ registros, groupedData, nomesFuncionarios });
@@ -71,7 +75,7 @@ export const loader = async () => {
 
 export default function ProjetoHoras() {    
   const { registros, groupedData, nomesFuncionarios } = useLoaderData();
-  const { registros2 } = useLoaderData();
+  //const { registros2 } = useLoaderData();
   const [funcionarioSelecionado, setFuncionarioSelecionado] = useState("");
   //const [obraSelecionada, setObraSelecionada] = useState("");
   const [obrasSelecionadas, setObrasSelecionadas] = useState<string[]>([]);
@@ -102,12 +106,27 @@ export default function ProjetoHoras() {
 
   
 
+  // const obrasDisponiveis = funcionarioSelecionado
+  //   ? _.uniqBy(
+  //       registros.filter((r) => r.nome === funcionarioSelecionado),
+  //       "nome_obra"
+  //     ).map((r) => r.nome_obra).sort()
+  //   : _.uniqBy(registros, "nome_obra").map((r) => r.nome_obra).sort();
+
   const obrasDisponiveis = funcionarioSelecionado
-    ? _.uniqBy(
-        registros.filter((r) => r.nome === funcionarioSelecionado),
-        "nome_obra"
-      ).map((r) => r.nome_obra)
-    : _.uniqBy(registros, "nome_obra").map((r) => r.nome_obra);
+  ? _.uniqBy(
+      registros.filter((r) => r.nome === funcionarioSelecionado),
+      "nome_obra"
+    ).map((r) => ({ // Modificado para retornar um objeto com cod_obra e nome_obra
+      cod_obra: r.cod_obra,
+      nome_obra: r.nome_obra,
+      nome_concatenado: `${r.cod_obra} - ${r.nome_obra}`
+    })).sort((a, b) => a.nome_concatenado.localeCompare(b.nome_concatenado)) // Ordena pelo nome concatenado
+  : _.uniqBy(registros, "nome_obra").map((r) => ({ // Modificado para retornar um objeto com cod_obra e nome_obra
+      cod_obra: r.cod_obra,
+      nome_obra: r.nome_obra,
+      nome_concatenado: `${r.cod_obra} - ${r.nome_obra}`
+    })).sort((a, b) =>  a.nome_concatenado.localeCompare(b.nome_concatenado)); // Ordena pelo nome concatenado
     
   // const dadosFiltrados = funcionarioSelecionado
   //   ? registros.filter((registro) => registro.nome === funcionarioSelecionado)
@@ -213,7 +232,7 @@ export default function ProjetoHoras() {
     categoria,
     valor: _.round((_.sumBy(registros, "horas_trabalhadas") / 60), 2), // Soma das horas por categoria
   }));
-  console.log(treeMapData)
+  //console.log(treeMapData)
   
 //   const onChartLoad = (args: IAccLoadedEventArgs): void => {
 //     document.getElementById('pie-chart').setAttribute('title', '');
@@ -282,11 +301,16 @@ export default function ProjetoHoras() {
         className="w-full p-2 border rounded"
       >
         <option value="">Todas</option>
-        {obrasDisponiveis.map((obra) => (
+        {/* {obrasDisponiveis.map((obra) => (
           <option key={obra} value={obra}>
             {obra}
           </option>
-        ))}
+        ))} */}
+        {obrasDisponiveis.map((obra) => (
+        <option key={obra.nome_obra} value={obra.nome_obra}> {/* Usando nome_obra como value */}
+        {obra.nome_concatenado} {/* Exibindo o nome concatenado */}
+    </option>
+  ))}
       </select>
 
     </div>

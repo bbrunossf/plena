@@ -10,6 +10,7 @@ export default function Sidebar() {
     { to: '/costs5', label: 'Custos' },    ,
     { to: '/registros', label: 'Registros' },
     { to: '/mes2', label: 'Registros por Mês' },
+	{ to: '/relatorioObras', label: 'Registros por Obra, por Mês' },	
     { to: '/agenda', label: 'Agenda' },
     { to: '/gantt-teste', label: 'Cronograma' },
 	{ to: '/converter2', label: 'Conversor de Datas' },
