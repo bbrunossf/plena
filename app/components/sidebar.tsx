@@ -12,7 +12,7 @@ export default function Sidebar() {
     { to: '/mes2', label: 'Registros por Mês' },
 	{ to: '/relatorioObras', label: 'Registros por Obra, por Mês' },	
     { to: '/agenda', label: 'Agenda' },
-    { to: '/gantt-teste', label: 'Cronograma' },
+    { to: '/gantt', label: 'Cronograma' },
 	{ to: '/converter2', label: 'Conversor de Datas' },
   { to: '/tutorial_conversor', label: 'Tutorial de Conversão de Datas' },
     
@@ -20,10 +20,10 @@ export default function Sidebar() {
 
   return (
     <div className="bg-gray-800 text-white w-64 min-h-screen fixed left-0 top-0">
-      <div className="p-4">
+      <div className="p-2">
         <h1 className="text-xl font-bold mb-8">Sistema de Gestão</h1>
         <nav>
-          <ul className="space-y-2">
+          <ul className="space-y-1">
             {links.map((link) => (
               <li key={link.to}>
                 <Link

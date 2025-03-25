@@ -94,25 +94,32 @@ model Agenda {
 }
 
 model Task {
-  id           Int            @id() @default(autoincrement())
-  taskName     String
-  startDate    DateTime
-  endDate      DateTime
-  duration     Float?         @default(0.0)
-  progress     Float?         @default(0.0)
-  parentId     Int?
-  isRecurring  Boolean?       @default(false)
-  recurrenceId Int?
-  notes        String?
-  parent       Task?          @relation("TaskHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
-  subtasks     Task[]         @relation("TaskHierarchy")
-  resources    TaskResource[]
+  id            Int                      @id() @default(autoincrement())
+  parentId      String?
+  taskName      String
+  startDate     DateTime
+  endDate       DateTime
+  duration      Float?                   @default(0.0)
+  notes         String?
+  progress      Float?                   @default(0.0)
+  predecessor   String?
+  taskResources TaskResourceAssignment[]
+
+  @@index([parentId], map: "parentId")
 }
 
 model TaskResource {
-  id           Int     @id() @default(autoincrement())
-  taskId       Int
-  resourceName String
-  resourceRole String?
-  task         Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  id              Int                      @id() @default(autoincrement())
+  resourceName    String
+  resourceRole    String?
+  taskAssignments TaskResourceAssignment[]
+}
+
+model TaskResourceAssignment {
+  taskId         Int
+  taskResourceId Int
+  taskResource   TaskResource @relation(fields: [taskResourceId], references: [id], onDelete: Cascade)
+  task           Task         @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, taskResourceId])
 }

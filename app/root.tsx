@@ -147,10 +147,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Meta />
         <Links />
       </head>
-      <body className="bg-gray-100">
-        <div className="flex">
+      <body className="bg-gray-100 overflow-x-hidden"> {/* //overflow-x-hidden para não ter scroll horizontal */}
+        <div className="flex h-screen">
           <Sidebar />
-          <main className="ml-64 flex-1 p-8">
+          {/* <main className="ml-64 flex-1 p-8"> */}
+          <main className="ml-64 flex-1 overflow-auto p-8">
             {children}
           </main>
         </div>
@@ -163,11 +164,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <div className="flex">
-      <Sidebar />
-      {/* <main className="ml-64 flex-1 p-8"> */}
+    // <div className="flex">
+      // <Sidebar />
+      // {/* <main className="ml-64 flex-1 p-8"> */}
         <Outlet />
-      {/* </main> */}
-    </div>
+      // {/* </main> */}
+    // </div>
   );
 }

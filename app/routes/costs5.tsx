@@ -124,7 +124,8 @@ export default function Costs() {
     return (
       // <div className="p-4">
       <div className="w-full min-w-full px-2 ml-1">
-        {/* <div className="flex justify-between items-left mb-4"> */}
+      {/* // <div className="flex w-full max-w-screen overflow-hidden"> */}
+        {/* // <div className="flex justify-between items-left mb-4"> */}
         <div className="flex justify-between items-center w-full mb-4 gap-4">
           <h2 className="text-2xl font-bold">Análise de Custos e Horas</h2>
           <div className="space-x-2">
