@@ -248,9 +248,105 @@ export default function GanttRoute() {
     }
   }
 
+
   
+  const taskFields={
+    id: 'TaskID',
+    name: 'taskName', //tem que ser name!
+    startDate: 'StartDate',
+    endDate: 'EndDate',
+    duration: 'Duration',
+    // progress: 'Progress',
+    parentID: 'parentId', //esse é a relação para dados flat 
+    //notes: 'notes',          
+    resourceInfo: 'Resources', //resourceInfo precisa ter para aparecer na caixa de diálogo, senão nem aparece. 
+    //resourceInfo:'Resources' aparece todos os recursos selecionados para a tarefa
+    //resourceInfo: 'resource' aparece os recursos selecionados para a tarefa, mas nenhum selecionado ?
+    //parece que tem ser o mesmo  valor colocado em ColumnDirective (mas eu não coloquei)
+    //child: 'subtasks', //Não se usa o child, pois os dados são planos (flat)          
+    dependency: 'Predecessor' //tem que ser 'dependency'; o da direita é o nome do campo no GanttComponent
+  }
   
-  
+  function queryTaskbarInfo(args) {
+    if(args.data.Resources === 'Leonardo'){
+        args.taskbarBgColor = '#DFECFF';
+        args.progressBarBgColor = '#006AA6'
+    }else if(args.data.Resources === 'Dayana'){
+        args.taskbarBgColor = '#E4E4E7';
+        args.progressBarBgColor = '#766B7C'
+    }
+    else if(args.data.Resources === 'Thadeu'){
+        args.taskbarBgColor = '#DFFFE2';
+        args.progressBarBgColor = '#00A653'
+    }
+    else if(args.data.Resources === 'Eduardo'){
+        args.taskbarBgColor = '#FFEBE9';
+        args.progressBarBgColor = '#FF3740'
+    }
+    else if(args.data.Resources === 'Bruno'){
+      args.taskbarBgColor = '#F0E5FF';
+      args.progressBarBgColor = '#8A4FFF'
+  }
+  else if(args.data.Resources === 'Carol'){
+    args.taskbarBgColor = '#FFF0E5';
+    args.progressBarBgColor = '#FF6B35'
+}
+};
+const resColumnTemplate = (props) => {
+  if (props.ganttProperties.resourceNames) {
+    if (props.ganttProperties.resourceNames === 'Leonardo') {
+      return (
+        <div style={{ width:'140px', height:'24px', borderRadius:'100px', backgroundColor:'#DFECFF', display:'flex', alignItems:'center', justifyContent:'center' }}>
+        <span style={{ color: '#006AA6', fontWeight: 500 }}>{props.ganttProperties.resourceNames}</span>
+        </div>
+      );
+    }
+
+    if (props.ganttProperties.resourceNames === 'Dayana') {
+      return (
+        <div style={{ width:'140px', height:'24px', borderRadius:'100px', backgroundColor:'#E4E4E7', display:'flex', alignItems:'center', justifyContent:'center' }}>
+        <span style={{ color: '#766B7C', fontWeight: 500 }}>{props.ganttProperties.resourceNames}</span>
+        </div>
+      );
+    }
+
+    if (props.ganttProperties.resourceNames === 'Thadeu') {
+      return (
+        <div style={{ width:'140px', height:'24px', borderRadius:'100px', backgroundColor:'#DFFFE2', display:'flex', alignItems:'center', justifyContent:'center' }}>
+        <span style={{ color: '#00A653', fontWeight: 500 }}>{props.ganttProperties.resourceNames}</span>
+        </div>
+      );
+    }
+
+    if (props.ganttProperties.resourceNames === 'Eduardo') {
+      return (
+        <div style={{ width:'140px', height:'24px', borderRadius:'100px', backgroundColor:'#FFEBE9', display:'flex', alignItems:'center', justifyContent:'center' }}>
+        <span style={{ color: '#FF3740', fontWeight: 500 }}>{props.ganttProperties.resourceNames}</span>
+        </div>
+      );
+    }
+
+    if (props.ganttProperties.resourceNames === 'Bruno') {
+      return (
+        <div style={{ width:'140px', height:'24px', borderRadius:'100px', backgroundColor:'#F0E5FF', display:'flex', alignItems:'center', justifyContent:'center' }}>
+        <span style={{ color: '#8A4FFF', fontWeight: 500 }}>{props.ganttProperties.resourceNames}</span>
+        </div>
+      );
+    }
+
+    if (props.ganttProperties.resourceNames === 'Carol') {
+      return (
+        <div style={{ width:'140px', height:'24px', borderRadius:'100px', backgroundColor:'#FFF0E5', display:'flex', alignItems:'center', justifyContent:'center' }}>
+        <span style={{ color: '#FF6B35', fontWeight: 500 }}>{props.ganttProperties.resourceNames}</span>
+        </div>
+      );
+    }
+
+  } else {
+    return <div></div>
+  }
+}
+const template = resColumnTemplate.bind(this);
   
 // incluir variável para receber oe eventos da Agenda e mostrar no PropertyPane
   
@@ -265,6 +361,7 @@ export default function GanttRoute() {
         <GanttComponent
           ref={ganttRef}
           id='Default'
+          queryTaskbarInfo= {queryTaskbarInfo}
           dataSource={tasks} //com os campos mapeados
           resources={resources} //relaciona aqui os recursos que aparecem no campo de recursos do ganttcomponent, senão fica vazio
           actionComplete={handleActionComplete}
@@ -280,6 +377,8 @@ export default function GanttRoute() {
             //não tenho um campo para Unit na tabela no banco de dados
           }}
 
+          dateFormat="dd/MM/yyyy" //se aplica a todos os campos de data
+
           //show only 3 columns
           splitterSettings={{
             columnIndex: 3,
@@ -289,22 +388,7 @@ export default function GanttRoute() {
           projectEndDate={new Date(2025,8,30)}        
           
           //taskFields: define o mapa de campos para as tarefas
-          taskFields={{
-            id: 'TaskID',
-            name: 'taskName', //tem que ser name!
-            startDate: 'StartDate',
-            endDate: 'EndDate',
-            duration: 'Duration',
-            // progress: 'Progress',
-            parentID: 'parentId', //esse é a relação para dados flat 
-            //notes: 'notes',          
-            resourceInfo: 'Resources', //resourceInfo precisa ter para aparecer na caixa de diálogo, senão nem aparece. 
-            //resourceInfo:'Resources' aparece todos os recursos selecionados para a tarefa
-            //resourceInfo: 'resource' aparece os recursos selecionados para a tarefa, mas nenhum selecionado ?
-            //parece que tem ser o mesmo  valor colocado em ColumnDirective (mas eu não coloquei)
-            //child: 'subtasks', //Não se usa o child, pois os dados são planos (flat)          
-            dependency: 'Predecessor' //tem que ser 'dependency'; o da direita é o nome do campo no GanttComponent
-          }}
+          taskFields={taskFields}
 
           allowSelection={true}
           allowSorting={true} //classificar/ordenar as LINHAS ao clicar nos cabeçalhos das COLUNAS
@@ -338,6 +422,16 @@ export default function GanttRoute() {
             <AddDialogFieldDirective type='Resources'></AddDialogFieldDirective> {/* ainda não tenho coluna para o 'Resources', então não aparece, mesmo colocando aqui */}
             <AddDialogFieldDirective type='Notes'></AddDialogFieldDirective>
           </AddDialogFieldsDirective>
+
+        {/* Só aparecem as colunas que forem definidas aqui*/}
+          <ColumnsDirective>
+            < ColumnDirective field= 'TaskName'  headerText= 'Name'  width= '270' > </ColumnDirective>
+            < ColumnDirective field= 'Resources'  headerText= 'Recurso'  width= '175' template= {template} > </ColumnDirective>
+            < ColumnDirective field= 'StartDate' headerText='Início' width= '150' > </ColumnDirective>
+            < ColumnDirective field= 'EndDate' headerText='Término' width= '150' > </ColumnDirective>
+            < ColumnDirective field= 'Duration' width= '150' > </ColumnDirective>
+            < ColumnDirective field= 'Progress' width= '150' > </ColumnDirective>
+            </ColumnsDirective>
 
 
           <Inject services={[Selection, Edit, Toolbar, DayMarkers, ContextMenu, Reorder, ColumnMenu, Filter, Sort, RowDD]} />
