@@ -149,21 +149,36 @@ export default function GanttRoute() {
 
       console.log('Dados para salvar:', updatedData);
       console.log('Tarefas excluídas:', deletedTasks);
-      
-      const response = await fetch("/api/save-tasks", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ updatedData, deletedTasks }), // Send both updated and deleted tasks
-    });
 
-    if (response.ok) {
+      //salva os dados na sessionStorage
+      sessionStorage.setItem('tasks', JSON.stringify(updatedData));
       alert("Dados salvos com sucesso!"); // Exibe mensagem de sucesso
-    } else {
-      alert("Erro ao salvar os dados. Tente novamente."); // Exibe mensagem de erro
-    }
+
+      
+      
+    //   const response = await fetch("/api/save-tasks", {
+    //   method: "POST",
+    //   headers: { "Content-Type": "application/json" },
+    //   body: JSON.stringify({ updatedData, deletedTasks }), // Send both updated and deleted tasks
+    // });
+    setTimeout(async () => {
+      const response = await fetch("/api/save-tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ updatedData, deletedTasks }), // Send both updated and deleted tasks
+      });
+    }, 2000);
+
+    // if (response.ok) {
+    //   alert("Dados salvos com sucesso!"); // Exibe mensagem de sucesso
+    // } else {
+    //   alert("Erro ao salvar os dados. Tente novamente."); // Exibe mensagem de erro
+    // }
+    // if (!response.ok) {
+    //   alert("Erro ao salvar os dados. Tente novamente"); // Exibe mensagem de sucesso
+    // } 
   } catch (error) {
-    console.error("Erro ao salvar os dados:", error);
-    alert("Ocorreu um erro ao salvar os dados. Verifique o console para mais detalhes.");
+    console.error("Erro ao salvar os dados:", error);    
   }finally {
     setIsLoading(false); // Desativa o spinner
   }
