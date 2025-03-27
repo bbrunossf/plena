@@ -6,7 +6,7 @@ import type { MetaFunction } from "@remix-run/node";
 import { useLoaderData } from '@remix-run/react'
 import { useRef } from 'react';
 
-//import '~/custom.css';
+import '~/custom.css';
 
 import '@syncfusion/ej2-base/styles/material.css';
 import '@syncfusion/ej2-buttons/styles/material.css';
@@ -49,6 +49,7 @@ import { DayMarkers, ContextMenu, Reorder, ColumnMenu, Filter, Sort } from '@syn
 import { getTasks, getResources, getUsedResources, getEvents } from "~/utils/tasks";
 import { PropertyPane } from '~/utils/propertyPane';
 import { DropDownListComponent } from '@syncfusion/ej2-react-dropdowns';
+import { Spinner } from '@syncfusion/ej2-react-popups';
 
 import { 
   ScheduleComponent, 
@@ -130,6 +131,7 @@ return ({ tasks: tasksWithId, resources: formattedResources, eventos: formattedE
 export default function GanttRoute() {  
   const ganttRef = useRef<GanttComponent>(null);
   const {tasks, resources, eventos} = useLoaderData<typeof loader>();
+  const [isLoading, setIsLoading] = useState(false); // Estado para controle do spinner
   const [showPasteModal, setShowPasteModal] = useState(false); // Estado para controlar o modal
   const [pasteData, setPasteData] = useState(''); // Estado para armazenar os dados colados
   
@@ -140,6 +142,7 @@ export default function GanttRoute() {
   const deletedTasks: any[] = []; // Track deleted tasks globally or in a state
   //função para o botão de salvar
 	const handleSaveButton = async () => {
+    setIsLoading(true); // Ativa o spinner
     try {    
       const ganttInstance = ganttRef.current;
       const updatedData = ganttInstance?.dataSource;
@@ -161,6 +164,8 @@ export default function GanttRoute() {
   } catch (error) {
     console.error("Erro ao salvar os dados:", error);
     alert("Ocorreu um erro ao salvar os dados. Verifique o console para mais detalhes.");
+  }finally {
+    setIsLoading(false); // Desativa o spinner
   }
   };
 
@@ -356,6 +361,7 @@ const template = resColumnTemplate.bind(this);
     <div className='flex w-full max-w-screen-2xl mx-auto overflow-hidden'> {/* Container pai para a linha principal */}
 
       <div className='w-3/4 pr-4'> {/* Coluna 1: Gantt (ocupa 3/4 da largura) */}
+      {isLoading && <div className="spinner">Carregando...</div>} {/* Exibição do spinner */}
         {/* <div className='flex'>  Container para Gantt e Botão */}
         {/*  <div className='w-3/4'>  GanttComponent ocupa 3/4 da largura */}    
         <GanttComponent
@@ -416,7 +422,7 @@ const template = resColumnTemplate.bind(this);
         >
           {/* campos a serem exibidos na caixa de diálogo de Adicionar. Se não declarar aqui, e não tiver campo para tal, não aparece.
       Se não for especificado, os campos derivam dos valores de 'taskSettings' e 'columns'*/}
-          <AddDialogFieldsDirective>
+          <AddDialogFieldsDirective>            
             <AddDialogFieldDirective type='General' headerText='General'></AddDialogFieldDirective>
             <AddDialogFieldDirective type='Dependency'></AddDialogFieldDirective>
             <AddDialogFieldDirective type='Resources'></AddDialogFieldDirective> {/* ainda não tenho coluna para o 'Resources', então não aparece, mesmo colocando aqui */}
@@ -425,6 +431,7 @@ const template = resColumnTemplate.bind(this);
 
         {/* Só aparecem as colunas que forem definidas aqui*/}
           <ColumnsDirective>
+            < ColumnDirective field= 'TaskID'  headerText= 'TaskID'  width= '100' > </ColumnDirective> {/* tem que ter, senão ele não reconhece nenhum campo como chave primária */}
             < ColumnDirective field= 'TaskName'  headerText= 'Name'  width= '270' > </ColumnDirective>
             < ColumnDirective field= 'Resources'  headerText= 'Recurso'  width= '175' template= {template} > </ColumnDirective>
             < ColumnDirective field= 'StartDate' headerText='Início' width= '150' > </ColumnDirective>

@@ -1,0 +1,10 @@
+.spinner {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000; /* Garante que o spinner fique sobre outros elementos */
+    font-size: 24px; /* Ajuste o tamanho conforme necessário */
+    color: #1124d1; /* Cor do texto do spinner */
+  }
+
