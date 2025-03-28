@@ -122,7 +122,7 @@ const tasksWithId = tasks.map((task: any, index: number) => ({
     entregue_em: evento.entregue_em,        
   }));  
 
-  console.log("tarefas FORMATADAS", tasksWithId);
+  //console.log("tarefas FORMATADAS", tasksWithId);
   //console.log("Eventos encontrados:", formattedEventos);
   //console.log("Recursos formatados:", formattedResources); //devolve uma lista/array de recursos (dicts), com todos os campos id, resourceName, resourceRole
 return ({ tasks: tasksWithId, resources: formattedResources, eventos: formattedEventos });
@@ -196,16 +196,19 @@ export default function GanttRoute() {
   //para exibir a resposta do componente após uma ação
   const handleActionComplete = async (args: any) => {
     console.log("ActionComplete acionada");
-    if (args.data) {
-      console.log("Ação completada! (request e data):", args.requestType, args.data);
-    }
-    if (args) {
-      console.log("Ação completada!! (=================args completo=============):", args);
-    }
+    // if (args.data) {
+    //   console.log("Ação completada! (request e data):", args.requestType, args.data);
+    // }
+    // if (args) {
+    //   console.log("Ação completada!! (=================args completo=============):", args);
+    // }
     if (args.requestType === 'delete') {
       deletedTasks.push(...args.data); // Add deleted tasks to the array
       console.log('Tarefas excluídas:', deletedTasks);
-    }  
+    } 
+    if (args.requestType === 'rowDropped') {      
+      console.log('rowDropped ACIONADO============:', args.fromIndex);
+    }   
   }
 
   //map all resources from 'resources' object and list its id and resourceName
@@ -367,6 +370,28 @@ const resColumnTemplate = (props) => {
   }
 }
 const template = resColumnTemplate.bind(this);
+
+const rowDrop = (args) => {  
+  //args.fromIndex é o índice original da linha que foi movida (contagem começa em 0)
+  //args.dropIndex é o índice onde a linha foi solta (contagem começa em 0)  
+  //args.dropRecord é o conteúdo inteiro da tarefa que cedeu lugar, e tem o novo index em dropRecord.index
+
+  let record = args.data[0]; //é o conteúdo inteiro da linha que foi movida  
+  console.log("REGISTRO CAPTURADO:",record); 
+
+  // o código original 
+  // let record = this.flatData[args.fromIndex][this.taskFields.id];
+  // let record2 = this.flatData[args.dropIndex][this.taskFields.id];
+  // let data: IGanttData = args.data[0];
+  // let uri = 'https://localhost:44379/Home/RowDropMethod';
+  // let dragdropdata = {
+  //      record: data[0].taskData,
+  //      position: args.dropIndex,
+  //      dragidMapping: record,
+  //      dropidMapping: record2
+  
+};
+
   
 // incluir variável para receber oe eventos da Agenda e mostrar no PropertyPane
   
@@ -386,6 +411,7 @@ const template = resColumnTemplate.bind(this);
           dataSource={tasks} //com os campos mapeados
           resources={resources} //relaciona aqui os recursos que aparecem no campo de recursos do ganttcomponent, senão fica vazio
           actionComplete={handleActionComplete}
+          rowDrop={rowDrop}
 
           resourceIDMapping='id'
           //viewType='ResourceView' //fica muito feio, agrupado por recursos
