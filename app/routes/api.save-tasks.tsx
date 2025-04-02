@@ -1,6 +1,6 @@
 import { data, json } from '@remix-run/node'
 import type { ActionFunction, LoaderFunction } from '@remix-run/node'
-import { getTasks, getResources } from "~/utils/tasks";
+import { getTasks, getResources, getLastOrder } from "~/utils/tasks";
 import { prisma } from "~/db.server";
 
 // export const action: ActionFunction = async ({ request, params }) => {
@@ -47,6 +47,9 @@ export const action: ActionFunction = async ({ request }) => {
     console.log("URL:", request.url); // detalhes da requisição    
     //console.log("Dados recebidos (atualizados):", updatedData);
     //console.log("Dados recebidos (excluídos):", deletedTasks);
+
+    const x = await getLastOrder()
+    console.log("último order encontrado:", x);
 
     // Process deleted tasks
     for (const task of deletedTasks) {

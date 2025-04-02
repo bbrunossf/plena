@@ -3,7 +3,7 @@ import { prisma } from "~/db.server";
 
 export async function getTasks() {
   return await prisma.task.findMany({
-    orderBy: { id: "asc" },  // Essa é a ordem que as tarefas são apresentadas no gráfico de gantt
+    orderBy: { order: "asc" },  // Essa é a ordem que as tarefas são apresentadas no gráfico de gantt
     select: {
       id: true,
       taskName: true,
@@ -78,4 +78,12 @@ export async function getEvents() {
         entregue em        
         FROM Agenda         
         `
+}
+
+
+export async function getLastOrder() {
+  return await prisma.task.findMany({
+    orderBy: { order: "desc" },
+    select: { order: true }
+  });
 }

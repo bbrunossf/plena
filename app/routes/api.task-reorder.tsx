@@ -31,9 +31,9 @@ export const action: ActionFunction = async ({ request }) => {
     //const { draggedTask, targetTask, operation } = ReorderSchema.parse(payload);
     console.log('++++++++++++++++Payload recebido:', payload);
     const { draggedTask, targetTask, operation } = payload;
-    console.log("============Dragged Item:", draggedTask);
-    console.log("=======Target Item:", targetTask);
-    console.log("====Operation:", operation);
+    console.log("============draggedTask Item:", draggedTask);
+    console.log("=======targetTask Item:", targetTask);
+    console.log("====Operation Item:", operation);
     
     
 
