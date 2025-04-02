@@ -45,8 +45,8 @@ export const action: ActionFunction = async ({ request }) => {
     //console.log("dados raw:", tasks);        
     console.log("Método HTTP:", method);        
     console.log("URL:", request.url); // detalhes da requisição    
-    console.log("Dados recebidos (atualizados):", updatedData);
-    console.log("Dados recebidos (excluídos):", deletedTasks);
+    //console.log("Dados recebidos (atualizados):", updatedData);
+    //console.log("Dados recebidos (excluídos):", deletedTasks);
 
     // Process deleted tasks
     for (const task of deletedTasks) {
@@ -88,6 +88,7 @@ export const action: ActionFunction = async ({ request }) => {
       //   },
       // });
       // Criação ou atualização da tarefa na tabela 'tasks'
+      console.log(">>>>>>>>>Dados recebidos, por tarefa:", task);
         const upsertedTask = await prisma.task.upsert({
           where: { id: task.TaskID },
           update: {
@@ -155,7 +156,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       const tasks = await getTasks();
       const resources = await getResources();
         //return { tasks, resources };
-        console.log("Recursos encontrados:", resources);
+        //console.log("Recursos encontrados:", resources);
       
       //depois tem que mapear os campos
       //mapear cada campo da tarefa para um objeto

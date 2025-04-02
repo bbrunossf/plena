@@ -127,6 +127,7 @@ model Agenda {
 
 model Task {
   id            Int                      @id @default(autoincrement())
+  order         Int?
   parentId      String?
   taskName      String
   startDate     DateTime

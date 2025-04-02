@@ -74,34 +74,100 @@ import { TreeViewComponent } from '@syncfusion/ej2-react-navigations';
 //Ver como mapear os recursos e mostrar eles no campo de recursos do ganttcomponent
 //Mudar a API para lidar com as solicitações
 
-export async function loader() {
-  const tasks = await getTasks();
-  const resources = await getResources();
-  const usedResources = await getUsedResources();
-  const eventos = await getEvents(); //arrumar depois as datas para poder usar o findMany
-  //return { tasks, resources };
-  //console.log("Recursos encontrados:", resources); //devolve uma lista/array de recursos (dicts), com todos os campos id, resourceName, resourceRole
-  //console.log("Recursos usados:", JSON.stringify(usedResources)); //devolve uma lista/array de recursos (dicts), com todos os campos id, resourceName, resourceRole
+// export async function loader() {
+//   const tasks = await getTasks(); //já está vindo com os recursos
+//   const resources = await getResources();
+//   const usedResources = await getUsedResources(); //vou usar o id da tarefa e o taskResourceId, que é do recurso
+//   const eventos = await getEvents(); //arrumar depois as datas para poder usar o findMany
+//   //return { tasks, resources };
+//   //console.log("Recursos encontrados:", resources); //devolve uma lista/array de recursos (dicts), com todos os campos id, resourceName, resourceRole
+//   console.log("Recursos usados:", JSON.stringify(usedResources)); //devolve uma lista/array de recursos (dicts), com todos os campos id, resourceName, resourceRole
 
-//depois tem que mapear os campos
-//mapear cada campo da tarefa para um objeto
-const tasksWithId = tasks.map((task: any, index: number) => ({
-  TaskID: task.id,
+//   const resourcesByTaskId = usedResources.reduce((acc, assignment) => {
+//     const { id, taskResources } = assignment;
+//     if (!acc[id]) {
+//       acc[id] = [];
+//     }
+//     acc[id].push(taskResources);
+//     return acc;
+//   }, {});
+
+// //depois tem que mapear os campos
+// //mapear cada campo da tarefa para um objeto
+// const tasksWithId = tasks.map((task: any, index: number) => ({
+//   TaskID: task.id,
+//     taskName: task.taskName,
+//     StartDate: new Date(task.startDate),//.toISOString().split('T')[0],
+//     EndDate: new Date(task.endDate),//.toISOString().split('T')[0],
+//     Duration: task.duration,
+//     Progress: task.progress,
+//     parentId: task.parentId,
+//     Predecessor: task.predecessor,    
+//     notes: task.notes,
+//     order: task.order,
+//     //Resources: resources.map((resource: any) => resource.id) // Map resource IDs, mas aparece todos os recursos em cada tarefa, e é o que é passado para a API
+//     //Resources: resources.map((resource: any) => resource.id) //não achei esse campo na documentação ainda
+//     //Resources: task.taskResources    
+//     //Resources: resources.map((resource: any) => resource.resourceName)
+//     //Resources: usedResources[index].taskResources.map((resource: any) => resource.taskResourceId)
+//     Resources: resourcesByTaskId[task.id] || []  // Obtem os recursos atribuídos à tarefa, ou um array vazio se não houver
+
+//   }));
+  
+//   // Map resources to match the GanttComponent's resourceFields
+//   const formattedResources = resources.map((resource: any) => ({
+//     id: resource.id,
+//     resourceName: resource.resourceName,
+//     resourceRole: resource.resourceRole,
+//   }));
+//   //console.log("Recursos formatados:", formattedResources); //devolve uma lista/array de recursos (dicts), com todos os campos id, resourceName, resourceRole
+
+//   const formattedEventos = eventos.map(evento => ({
+//     Id: evento.id,
+//     Subject: evento.titulo,
+//     Description: evento.descricao,
+//     StartTime: new Date(evento.data_hora_inicial),
+//     EndTime: new Date(evento.data_hora_final),
+//     IsAllDay: evento.dia_inteiro,        
+//     ObraId: evento.id_obra,  // campo personalizado para o código da obra
+//     entregue: evento.entregue,        
+//     entregue_em: evento.entregue_em,        
+//   }));  
+
+//   console.log("tarefas FORMATADAS", tasksWithId);
+//   //console.log("Eventos encontrados:", formattedEventos);
+//   //console.log("Recursos formatados:", formattedResources); //devolve uma lista/array de recursos (dicts), com todos os campos id, resourceName, resourceRole
+// return ({ tasks: tasksWithId, resources: formattedResources, eventos: formattedEventos });
+// };
+
+export async function loader() {
+  // Obtenha as tarefas, recursos e eventos
+  const tasks = await getTasks(); // Já vem com os recursos incluídos
+  const resources = await getResources(); // Mantemos essa chamada caso precise dos recursos independentes
+  const eventos = await getEvents(); // Se você precisar fazer mais manipulações com eventos, mantenha esta chamada
+
+  // Log para fins de depuração
+  console.log("tarefas com recursos:", tasks);
+  //console.log("Recursos encontrados:", JSON.stringify(resources)); // Devolve uma lista/array de recursos
+  // Não precisamos mais do usedResources, já que as tarefas já vêm com recursos
+
+  // Mapeando cada tarefa para a estrutura desejada
+  const tasksWithId = tasks.map((task: any) => ({
+    TaskID: task.id,
     taskName: task.taskName,
-    StartDate: new Date(task.startDate),//.toISOString().split('T')[0],
-    EndDate: new Date(task.endDate),//.toISOString().split('T')[0],
+    StartDate: new Date(task.startDate), 
+    EndDate: new Date(task.endDate), 
     Duration: task.duration,
     Progress: task.progress,
     parentId: task.parentId,
     Predecessor: task.predecessor,    
     notes: task.notes,
-    //Resources: resources.map((resource: any) => resource.id) // Map resource IDs, mas aparece todos os recursos em cada tarefa, e é o que é passado para a API
-    //Resources: resources.map((resource: any) => resource.id) //não achei esse campo na documentação ainda
-    //Resources: task.taskResources    
-    //Resources: resources.map((resource: any) => resource.resourceName)
-    Resources: usedResources[index].taskResources.map((resource: any) => resource.taskResourceId)
+    order: task.order,
+    //Resources: task.taskResources.taskResourceId // Já vem como um array de IDs
+    // Mapeando taskResources para extrair os taskResourceId como um array
+    Resources: task.taskResources.map((resource: any) => resource.taskResourceId)
   }));
-  
+
   // Map resources to match the GanttComponent's resourceFields
   const formattedResources = resources.map((resource: any) => ({
     id: resource.id,
@@ -122,11 +188,9 @@ const tasksWithId = tasks.map((task: any, index: number) => ({
     entregue_em: evento.entregue_em,        
   }));  
 
-  //console.log("tarefas FORMATADAS", tasksWithId);
-  //console.log("Eventos encontrados:", formattedEventos);
-  //console.log("Recursos formatados:", formattedResources); //devolve uma lista/array de recursos (dicts), com todos os campos id, resourceName, resourceRole
-return ({ tasks: tasksWithId, resources: formattedResources, eventos: formattedEventos });
-};
+  //return { tasks: tasksWithId, resources }; // Retorna as tarefas formatadas e a lista de recursos
+  return ({ tasks: tasksWithId, resources: formattedResources, eventos: formattedEventos });
+}
 
 export default function GanttRoute() {  
   const ganttRef = useRef<GanttComponent>(null);
@@ -314,7 +378,17 @@ export default function GanttRoute() {
     args.taskbarBgColor = '#FFF0E5';
     args.progressBarBgColor = '#FF6B35'
 }
+//add a simple color if none of the above
+else{
+  args.taskbarBgColor = '#E4E4E7';
+  args.progressBarBgColor = '#766B7C'
+}
+  }
+
+  const labelSettings = {
+    rightLabel: 'Resources'
 };
+
 const resColumnTemplate = (props) => {
   if (props.ganttProperties.resourceNames) {
     if (props.ganttProperties.resourceNames === 'Leonardo') {
@@ -364,33 +438,67 @@ const resColumnTemplate = (props) => {
         </div>
       );
     }
+    //add when none  of the above
+    else{
+      return (
+        <div style={{ width:'140px', height:'24px', borderRadius:'100px', backgroundColor:'#E4E4E7', display:'flex', alignItems:'center', justifyContent:'center' }}>
+        <span style={{ color: '#766B7C', fontWeight: 500 }}>{props.ganttProperties.resourceNames}</span>
+        </div>
+      );
 
-  } else {
-    return <div></div>
-  }
+   
+  // else {
+  //   return <div></div>
+   }
+ }
 }
+
 const template = resColumnTemplate.bind(this);
 
-const rowDrop = (args) => {  
-  //args.fromIndex é o índice original da linha que foi movida (contagem começa em 0)
-  //args.dropIndex é o índice onde a linha foi solta (contagem começa em 0)  
+const rowDrop = async (args: any) => {
+  //args.fromIndex é o índice original da linha que foi movida (contagem começa em 0) *ok, vai ser o "record"
+  //args.dropIndex é o índice onde a linha foi solta (contagem começa em 0)  *ok, vai ser o "record2"
   //args.dropRecord é o conteúdo inteiro da tarefa que cedeu lugar, e tem o novo index em dropRecord.index
+  //let record = args.data[0]; //é o conteúdo inteiro da linha que foi movida  *ok, vai ser o "data"
 
-  let record = args.data[0]; //é o conteúdo inteiro da linha que foi movida  
-  console.log("REGISTRO CAPTURADO:",record); 
-
-  // o código original 
-  // let record = this.flatData[args.fromIndex][this.taskFields.id];
-  // let record2 = this.flatData[args.dropIndex][this.taskFields.id];
-  // let data: IGanttData = args.data[0];
-  // let uri = 'https://localhost:44379/Home/RowDropMethod';
-  // let dragdropdata = {
-  //      record: data[0].taskData,
-  //      position: args.dropIndex,
-  //      dragidMapping: record,
-  //      dropidMapping: record2
+  // Obter o ID da tarefa arrastada
+  const dragidMapping = args.data[0].taskData.TaskID;
   
-};
+  // Obter o ID da tarefa de destino
+  const dropidMapping = args.dropRecord?.taskData?.TaskID || null; // Pode ser null se for root
+
+  //funcoes auxiliares
+  const newParentId = args.dropPosition === 'middleSegment' 
+    ? args.dropRecord?.taskData?.TaskID 
+    : args.dropRecord?.taskData?.parentId;
+
+  const payload = {
+    draggedTask: {
+      id: args.data[0].taskData.TaskID,
+      currentParent: args.data[0].taskData.parentId,
+      currentOrder: args.data[0].taskData.order
+    },
+    targetTask: args.dropRecord?.taskData
+      ? {
+          id: args.dropRecord.taskData.TaskID,
+          parentId: args.dropRecord.taskData.parentId,
+          order: args.dropRecord.taskData.order
+        }
+      : null,
+    operation: {
+      type: args.dropPosition,
+      newParentId: newParentId
+    }
+  };
+  
+  console.log('==========================Payload Enviado:', JSON.stringify(payload, null, 2));
+  // Enviar para a API
+     const response = await fetch("/api/task-reorder", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify( payload),   
+    });
+  }
 
   
 // incluir variável para receber oe eventos da Agenda e mostrar no PropertyPane
@@ -415,6 +523,8 @@ const rowDrop = (args) => {
 
           resourceIDMapping='id'
           //viewType='ResourceView' //fica muito feio, agrupado por recursos
+
+          labelSettings = {labelSettings }
 
           //resourceFields: define o mapa de campos para os recursos
           resourceFields={{
