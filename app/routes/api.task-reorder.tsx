@@ -25,100 +25,207 @@ import { z } from 'zod';
 // });
 
 
-export const action: ActionFunction = async ({ request }) => {
-  try{
-    const payload = await request.json();
-    //const { draggedTask, targetTask, operation } = ReorderSchema.parse(payload);
-    console.log('++++++++++++++++Payload recebido:', payload);
-    const { draggedTask, targetTask, operation } = payload;
-    console.log("============draggedTask Item:", draggedTask);
-    console.log("=======targetTask Item:", targetTask);
-    console.log("====Operation Item:", operation);
+// export const action: ActionFunction = async ({ request }) => {
+//   try{
+//     const payload = await request.json();
+//     //const { draggedTask, targetTask, operation } = ReorderSchema.parse(payload);
+//     console.log('++++++++++++++++Payload recebido:', payload);
+//     const { draggedTask, targetTask, operation } = payload;
+//     console.log("============draggedTask Item:", draggedTask);
+//     console.log("=======targetTask Item:", targetTask);
+//     console.log("====Operation Item:", operation);
     
     
 
-    return await prisma.$transaction(async (tx) => {
-      // 1. Update previous siblings (remove from old position)
-      if (draggedTask.currentParent !== null) {
-        await tx.task.updateMany({
-          where: {
-            parentId: draggedTask.currentParent,
-            order: { gt: draggedTask.currentOrder }
-          },
-          data: { order: { decrement: 1 } }
-        });
-      }
+//     return await prisma.$transaction(async (tx) => {
+//       // 1. Update previous siblings (remove from old position)
+//       if (draggedTask.currentParent !== null) {
+//         await tx.task.updateMany({
+//           where: {
+//             parentId: draggedTask.currentParent,
+//             order: { gt: draggedTask.currentOrder }
+//           },
+//           data: { order: { decrement: 1 } }
+//         });
+//       }
 
-      // 2. Calculate new order position
-      let newOrder: number;
-      const siblings = await tx.task.findMany({
-        where: { parentId: operation.newParentId },
-        orderBy: { order: 'asc' }
-      });
+//       // 2. Calculate new order position
+//       let newOrder: number;
+//       const siblings = await tx.task.findMany({
+//         where: { parentId: operation.newParentId },
+//         orderBy: { order: 'asc' }
+//       });
 
-      // Case 1: Adding to empty parent
-      if (!targetTask) {
-        newOrder = siblings.length > 0 ? siblings[siblings.length - 1].order + 1 : 0;
-      }
-      // Case 2: Position-based calculation
-      else {
-        const targetIndex = siblings.findIndex(t => t.id === targetTask.id);
+//       // Case 1: Adding to empty parent
+//       if (!targetTask) {
+//         newOrder = siblings.length > 0 ? siblings[siblings.length - 1].order + 1 : 0;
+//       }
+//       // Case 2: Position-based calculation
+//       else {
+//         const targetIndex = siblings.findIndex(t => t.id === targetTask.id);
         
-        switch(operation.type) {
-          case 'topSegment':
-            newOrder = targetIndex > 0 ? siblings[targetIndex - 1].order + 1 : 0;
-            break;
+//         switch(operation.type) {
+//           case 'topSegment':
+//             newOrder = targetIndex > 0 ? siblings[targetIndex - 1].order + 1 : 0;
+//             break;
             
-          case 'bottomSegment':
-            newOrder = siblings[targetIndex].order + 1;
-            break;
+//           case 'bottomSegment':
+//             newOrder = siblings[targetIndex].order + 1;
+//             break;
             
-          case 'middleSegment':
-            const children = await tx.task.findMany({
-              where: { parentId: targetTask.id },
-              orderBy: { order: 'asc' }
-            });
-            newOrder = children.length > 0 ? children[children.length - 1].order + 1 : 0;
-            break;
+//           case 'middleSegment':
+//             const children = await tx.task.findMany({
+//               where: { parentId: targetTask.id },
+//               orderBy: { order: 'asc' }
+//             });
+//             newOrder = children.length > 0 ? children[children.length - 1].order + 1 : 0;
+//             break;
             
-          default:
-            throw new Error('Invalid drop position');
-        }
+//           default:
+//             throw new Error('Invalid drop position');
+//         }
+//       }
+
+//       // 3. Create space for moved item
+//       await tx.task.updateMany({
+//         where: {
+//           parentId: operation.newParentId,
+//           order: { gte: newOrder }
+//         },
+//         data: { order: { increment: 1 } }
+//       });
+
+//       // 4. Update moved task
+//       await tx.task.update({
+//         where: { id: draggedTask.id },
+//         data: {
+//           parentId: operation.newParentId,
+//           order: newOrder
+//         }
+//       });
+
+//       return json({ 
+//         success: true, 
+//         newParent: operation.newParentId,
+//         newOrder
+//       });
+//     });
+
+//   } catch (error) {
+//     console.error('Reordering failed:', error);
+//     return json(
+//       { error: 'Reordering operation failed', details: error instanceof Error ? error.message : 'Unknown error' },
+//       { status: 500 }
+//     );
+//   }
+//   };
+
+
+
+  export const action: ActionFunction = async ({ request }) => {
+    try {        
+    const value = await request.json();
+    console.log('++++++++++++++++Payload recebido:', value);
+
+    // Desestruturar o objeto 'value'
+    const { 
+      dragidMapping, 
+      dropidMapping, 
+      dragorderMapping,
+      droporderMapping
+      } = value;
+
+    // Encontra a tarefa arrastada
+    const draggedTask = await prisma.task.findUnique({
+      where: { id: dragidMapping }
+      });
+
+    if (!draggedTask) {
+        return json({ error: "Task not found" }, { status: 404 });
+    }
+
+    //const draggedOrder = draggedTask.order; //renumera a tarefa arrastada
+    // Renumerar a tarefa usando o Prisma para uma posição nula até terminar de numerar as outras tarefas
+    await prisma.task.update({
+      where: { id: dragidMapping },
+      data: {
+        order: 0 // Renumerar para 0
       }
+    });  
 
-      // 3. Create space for moved item
-      await tx.task.updateMany({
-        where: {
-          parentId: operation.newParentId,
-          order: { gte: newOrder }
-        },
-        data: { order: { increment: 1 } }
-      });
+    if (dragorderMapping > droporderMapping) {
+        // Se origem > destino
+        // Calcula o intervalo que deve ser renumerado
+        await prisma.task.updateMany({
+            where: {
+                order: {
+                    gte: droporderMapping,
+                    lt: dragorderMapping // Tarefas entre o novo e o antigo
+                }
+            },
+            data: {
+                order: {
+                    increment: 1 // Incrementa a ordem
+                }
+            }
+        });
 
-      // 4. Update moved task
-      await tx.task.update({
-        where: { id: draggedTask.id },
-        data: {
-          parentId: operation.newParentId,
-          order: newOrder
-        }
-      });
+     // Renumerar a tarefa usando o Prisma, de forma definitiva
+    await prisma.task.update({
+      where: { id: dragidMapping },
+      data: {
+        order: droporderMapping
+      }
+    });     
+        
+        
+    } else if (droporderMapping >  dragorderMapping) {
+        // Se destino > origem
 
-      return json({ 
-        success: true, 
-        newParent: operation.newParentId,
-        newOrder
-      });
-    });
+        // Renumerar a tarefa usando o Prisma para uma posição nula até terminar de numerar as outras tarefas
+        await prisma.task.update({
+          where: { id: dragidMapping },
+          data: {
+            order: 0 // Renumerar para 0
+          }
+        });   
 
-  } catch (error) {
-    console.error('Reordering failed:', error);
-    return json(
-      { error: 'Reordering operation failed', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
-  }
-  };
+        // Calcula o intervalo que deve ser renumerado
+        await prisma.task.updateMany({
+            where: {
+                order: {
+                    gt: dragorderMapping,
+                    lte: droporderMapping // Tarefas entre o antigo e o novo
+                }
+            },
+            data: {
+                order: {
+                    decrement: 1 // Decrementa a ordem
+                }
+            }
+        });
+
+        // Renumerar a tarefa usando o Prisma de forma definitiva
+        await prisma.task.update({
+          where: { id: dragidMapping },
+          data: {
+            order: droporderMapping
+          }
+        });          
+    } 
+    else {
+        // Se origem = destino
+        // Não há necessidade de renumerar
+    }
+    return json({ message: "Task updated successfully" });
+    } catch (error) {
+      console.error('Reordering failed:', error);
+      return json(
+        { error: 'Reordering operation failed', details: error instanceof Error ? error.message : 'Unknown error' },
+        { status: 500 }
+      );
+    }
+};
 
 
 

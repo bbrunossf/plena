@@ -82,7 +82,7 @@ export async function getEvents() {
 
 
 export async function getLastOrder() {
-  return await prisma.task.findMany({
+  return await prisma.task.findFirst({
     orderBy: { order: "desc" },
     select: { order: true }
   });

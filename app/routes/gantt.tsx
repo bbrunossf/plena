@@ -46,7 +46,7 @@ import { ColumnsDirective, ColumnDirective, Inject, Selection, AddDialogFieldsDi
 import { Edit, Toolbar, ToolbarItem } from '@syncfusion/ej2-react-gantt';
 import { DayMarkers, ContextMenu, Reorder, ColumnMenu, Filter, Sort } from '@syncfusion/ej2-react-gantt';
 
-import { getTasks, getResources, getUsedResources, getEvents } from "~/utils/tasks";
+import { getTasks, getLastOrder, getResources, getUsedResources, getEvents } from "~/utils/tasks";
 import { PropertyPane } from '~/utils/propertyPane';
 import { DropDownListComponent } from '@syncfusion/ej2-react-dropdowns';
 import { Spinner } from '@syncfusion/ej2-react-popups';
@@ -145,6 +145,7 @@ export async function loader() {
   const tasks = await getTasks(); // Já vem com os recursos incluídos
   const resources = await getResources(); // Mantemos essa chamada caso precise dos recursos independentes
   const eventos = await getEvents(); // Se você precisar fazer mais manipulações com eventos, mantenha esta chamada
+  const x = await getLastOrder();
 
   // Log para fins de depuração
   console.log("tarefas com recursos:", tasks);
@@ -189,12 +190,12 @@ export async function loader() {
   }));  
 
   //return { tasks: tasksWithId, resources }; // Retorna as tarefas formatadas e a lista de recursos
-  return ({ tasks: tasksWithId, resources: formattedResources, eventos: formattedEventos });
+  return ({ tasks: tasksWithId, resources: formattedResources, eventos: formattedEventos, x });
 }
 
 export default function GanttRoute() {  
   const ganttRef = useRef<GanttComponent>(null);
-  const {tasks, resources, eventos} = useLoaderData<typeof loader>();
+  const {tasks, resources, eventos, x} = useLoaderData<typeof loader>();
   const [isLoading, setIsLoading] = useState(false); // Estado para controle do spinner
   const [showPasteModal, setShowPasteModal] = useState(false); // Estado para controlar o modal
   const [pasteData, setPasteData] = useState(''); // Estado para armazenar os dados colados
@@ -295,6 +296,7 @@ export default function GanttRoute() {
           //EndDate: new Date(),//.toISOString().split('T')[0],
           Duration: 1,
           Progress: 0,
+          order: x.order + 1,
         };
         ganttRef.current?.addRecord(newTask);
       }
@@ -472,24 +474,37 @@ const rowDrop = async (args: any) => {
     ? args.dropRecord?.taskData?.TaskID 
     : args.dropRecord?.taskData?.parentId;
 
+  // const payload = {
+  //   draggedTask: {
+  //     id: args.data[0].taskData.TaskID,
+  //     currentParent: args.data[0].taskData.parentId,
+  //     currentOrder: args.data[0].taskData.order
+  //   },
+  //   targetTask: args.dropRecord?.taskData
+  //     ? {
+  //         id: args.dropRecord.taskData.TaskID,
+  //         parentId: args.dropRecord.taskData.parentId,
+  //         order: args.dropRecord.taskData.order
+  //       }
+  //     : null,
+  //   operation: {
+  //     type: args.dropPosition,
+  //     newParentId: newParentId
+  //   }
+  // };
+
   const payload = {
-    draggedTask: {
-      id: args.data[0].taskData.TaskID,
-      currentParent: args.data[0].taskData.parentId,
-      currentOrder: args.data[0].taskData.order
-    },
-    targetTask: args.dropRecord?.taskData
-      ? {
-          id: args.dropRecord.taskData.TaskID,
-          parentId: args.dropRecord.taskData.parentId,
-          order: args.dropRecord.taskData.order
-        }
-      : null,
-    operation: {
-      type: args.dropPosition,
-      newParentId: newParentId
-    }
-  };
+    dragidMapping: args.data[0].taskData.TaskID, // ID da tarefa que está sendo arrastada
+    dropidMapping: args.dropRecord?.taskData.TaskID || null, // ID da tarefa de destino
+    dragorderMapping: args.data[0].taskData.order, // order da tarefa que está sendo arrastada
+    droporderMapping: args.dropRecord?.taskData.order || null, // order da tarefa de destino
+    // position: args.dropPosition, // Posição (bottomSegment, topSegment, middleSegment)
+    // record: {
+    //     taskID: args.data[0].taskData.TaskID, // Usado para identificação
+    //     parentID: args.data[0].taskData.parentId, // ID do pai atual
+    //     order: args.data[0].taskData.order // Ordem atual da tarefa que está sendo arrastada
+    //}
+};
   
   console.log('==========================Payload Enviado:', JSON.stringify(payload, null, 2));
   // Enviar para a API

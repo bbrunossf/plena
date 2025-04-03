@@ -116,6 +116,7 @@ export const action: ActionFunction = async ({ request }) => {
               //taskResources: task.Resources.id, //com Resources deu certo, apareceu o recurso inteiro na tarefa na hora de inserir, 
               //mas aparece tudo em dict, e não só o id do recurso
               notes: task.notes,
+              order: x.order + 1,
           },
   });
       // Atualizar associações de recursos
