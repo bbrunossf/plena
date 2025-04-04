@@ -85,6 +85,75 @@ import { c } from "node_modules/vite/dist/node/types.d-aGj9QkWt";
 import { addDays, differenceInCalendarDays, isWithinInterval, startOfWeek, endOfWeek } from 'date-fns';
 
 
+//Ver como mapear os recursos e mostrar eles no campo de recursos do ganttcomponent
+//Mudar a API para lidar com as solicitações
+
+// export async function loader() {
+//   const tasks = await getTasks(); //já está vindo com os recursos
+//   const resources = await getResources();
+//   const usedResources = await getUsedResources(); //vou usar o id da tarefa e o taskResourceId, que é do recurso
+//   const eventos = await getEvents(); //arrumar depois as datas para poder usar o findMany
+//   //return { tasks, resources };
+//   //console.log("Recursos encontrados:", resources); //devolve uma lista/array de recursos (dicts), com todos os campos id, resourceName, resourceRole
+//   console.log("Recursos usados:", JSON.stringify(usedResources)); //devolve uma lista/array de recursos (dicts), com todos os campos id, resourceName, resourceRole
+
+//   const resourcesByTaskId = usedResources.reduce((acc, assignment) => {
+//     const { id, taskResources } = assignment;
+//     if (!acc[id]) {
+//       acc[id] = [];
+//     }
+//     acc[id].push(taskResources);
+//     return acc;
+//   }, {});
+
+// //depois tem que mapear os campos
+// //mapear cada campo da tarefa para um objeto
+// const tasksWithId = tasks.map((task: any, index: number) => ({
+//   TaskID: task.id,
+//     taskName: task.taskName,
+//     StartDate: new Date(task.startDate),//.toISOString().split('T')[0],
+//     EndDate: new Date(task.endDate),//.toISOString().split('T')[0],
+//     Duration: task.duration,
+//     Progress: task.progress,
+//     parentId: task.parentId,
+//     Predecessor: task.predecessor,    
+//     notes: task.notes,
+//     order: task.order,
+//     //Resources: resources.map((resource: any) => resource.id) // Map resource IDs, mas aparece todos os recursos em cada tarefa, e é o que é passado para a API
+//     //Resources: resources.map((resource: any) => resource.id) //não achei esse campo na documentação ainda
+//     //Resources: task.taskResources    
+//     //Resources: resources.map((resource: any) => resource.resourceName)
+//     //Resources: usedResources[index].taskResources.map((resource: any) => resource.taskResourceId)
+//     Resources: resourcesByTaskId[task.id] || []  // Obtem os recursos atribuídos à tarefa, ou um array vazio se não houver
+
+//   }));
+  
+//   // Map resources to match the GanttComponent's resourceFields
+//   const formattedResources = resources.map((resource: any) => ({
+//     id: resource.id,
+//     resourceName: resource.resourceName,
+//     resourceRole: resource.resourceRole,
+//   }));
+//   //console.log("Recursos formatados:", formattedResources); //devolve uma lista/array de recursos (dicts), com todos os campos id, resourceName, resourceRole
+
+//   const formattedEventos = eventos.map(evento => ({
+//     Id: evento.id,
+//     Subject: evento.titulo,
+//     Description: evento.descricao,
+//     StartTime: new Date(evento.data_hora_inicial),
+//     EndTime: new Date(evento.data_hora_final),
+//     IsAllDay: evento.dia_inteiro,        
+//     ObraId: evento.id_obra,  // campo personalizado para o código da obra
+//     entregue: evento.entregue,        
+//     entregue_em: evento.entregue_em,        
+//   }));  
+
+//   console.log("tarefas FORMATADAS", tasksWithId);
+//   //console.log("Eventos encontrados:", formattedEventos);
+//   //console.log("Recursos formatados:", formattedResources); //devolve uma lista/array de recursos (dicts), com todos os campos id, resourceName, resourceRole
+// return ({ tasks: tasksWithId, resources: formattedResources, eventos: formattedEventos });
+// };
+
 export async function loader() {
   // Obtenha as tarefas, recursos e eventos
   const tasks = await getTasks(); // Já vem com os recursos incluídos
@@ -153,7 +222,7 @@ function agruparHorasPorRecurso(tasks: any[], resources: any[]) {
   const cargaPorRecurso: Record<string, number[]> = {};
 
   resources.forEach((recurso) => {       
-    cargaPorRecurso[recurso.id] = [0, 0, 0, 0]; //representa as 4 semanas    
+    cargaPorRecurso[recurso.id] = [0, 0, 0, 0];    
   });
 
   for (const tarefa of tasks) {
@@ -177,9 +246,8 @@ function agruparHorasPorRecurso(tasks: any[], resources: any[]) {
         //   cargaPorRecurso[recursoId][index] += cargaParcial;
         // }
         for (const recursoId of recursos) {
-          //console.log("recursoId:", recursoId);
-          if (cargaPorRecurso[recursoId.id]) {
-            cargaPorRecurso[recursoId.id][index] += cargaParcial;
+          if (cargaPorRecurso[recursoId]) {
+            cargaPorRecurso[recursoId][index] += cargaParcial;
           } else {
             console.warn(`Recurso com ID ${recursoId} não encontrado na lista de recursos.`);
           }
@@ -216,12 +284,39 @@ export default function GanttRoute() {
 
   useEffect(() => {
     const dadosGrafico = agruparHorasPorRecurso(tasks, resources);
-    //console.log("Dados do gráfico:", dadosGrafico);
     setChartData(dadosGrafico);
   }, [tasks, resources]);
+
+  // // Função para lidar com a seleção de um recurso
+  // const handleResourceSelect = (event) => {
+  //   // Acesse o ID da árvore de nós selecionados
+  //   const selectedId = event.nodeData?.id;
+  //   if (selectedId) {
+  //     console.log('Recurso selecionado:', selectedId);
+      
+  //     // Atualize o estado com o ID do recurso como número (para combinar com o tipo nos dados)
+  //     setSelectedResource(parseInt(selectedId));
+  //   }
+  // };
   
+  // // Função para filtrar tarefas com base no recurso selecionado
+  // const getFilteredTasks = () => {
+  //   if (!selectedResource) {
+  //     return tasks; // Retorna todas as tarefas se nenhum recurso estiver selecionado
+  //   }
+    
+  //   return tasks.filter(task => 
+  //     Array.isArray(task.Resources) && 
+  //     task.Resources.includes(selectedResource)
+  //   );
+  // };
+  
+  // // Use esta função para obter as tarefas filtradas
+  // const filteredTasks = getFilteredTasks();
 
   const deletedTasks: any[] = []; // Track deleted tasks globally or in a state
+
+  
 
   //função para o botão de salvar
 	const handleSaveButton = async () => {
@@ -267,11 +362,20 @@ export default function GanttRoute() {
   }
   };
 
+
+
+  
+  // Configuração do DataManager com WebApiAdaptor
+  // const dataManager = new DataManager({
+    // url: '/api/tasks',
+    // removeUrl: '/api/tasks',
+    // adaptor: new WebApiAdaptor(),  
+    // crossDomain: true    
+  // })
+
   //para exibir a resposta do componente após uma ação
   const handleActionComplete = async (args: any) => {
     console.log("ActionComplete acionada");
-    //ganttRef.current?.fitToProject(); //a cada ação, muda o zoom pra caber na tela, não deu certo
-
     // if (args.data) {
     //   console.log("Ação completada! (request e data):", args.requestType, args.data);
     // }
@@ -336,8 +440,8 @@ export default function GanttRoute() {
   // toolbar={['Add', 'Edit', 'Update', 'Delete', 'Cancel', 'Indent', 'Outdent', 
             //   'ZoomIn', 'ZoomOut', 'ExpandAll', 'CollapseAll']}
   const customToolbarItems: any[] = [
-    'Edit', 'Update', 'Delete', 'Cancel', 'Indent', 'Outdent', 
-    'ZoomIn', 'ZoomOut', 'ZoomToFit',
+    'Add', 'Edit', 'Update', 'Delete', 'Cancel', 'Indent', 'Outdent', 
+    'ZoomIn', 'ZoomOut',
     { text: 'Colar Tarefas', tooltipText: 'Colar Tarefas', id: 'pasteTasks' },
   ];
 
@@ -495,7 +599,30 @@ const rowDrop = async (args: any) => {
   
   // Obter o ID da tarefa de destino
   const dropidMapping = args.dropRecord?.taskData?.TaskID || null; // Pode ser null se for root
-  
+
+  //funcoes auxiliares
+  // const newParentId = args.dropPosition === 'middleSegment' 
+  //   ? args.dropRecord?.taskData?.TaskID 
+  //   : args.dropRecord?.taskData?.parentId;
+
+  // const payload = {
+  //   draggedTask: {
+  //     id: args.data[0].taskData.TaskID,
+  //     currentParent: args.data[0].taskData.parentId,
+  //     currentOrder: args.data[0].taskData.order
+  //   },
+  //   targetTask: args.dropRecord?.taskData
+  //     ? {
+  //         id: args.dropRecord.taskData.TaskID,
+  //         parentId: args.dropRecord.taskData.parentId,
+  //         order: args.dropRecord.taskData.order
+  //       }
+  //     : null,
+  //   operation: {
+  //     type: args.dropPosition,
+  //     newParentId: newParentId
+  //   }
+  // };
 
   const payload = {
     dragidMapping: args.data[0].taskData.TaskID, // ID da tarefa que está sendo arrastada
@@ -564,8 +691,8 @@ const rowDrop = async (args: any) => {
             columnIndex: 4,
           }}
           //treeColumnIndex={1}
-          //projectStartDate={new Date(2025,1,1)}
-          //projectEndDate={new Date(2025,8,30)}        
+          projectStartDate={new Date(2025,1,1)}
+          projectEndDate={new Date(2025,8,30)}        
           
           //taskFields: define o mapa de campos para as tarefas
           taskFields={taskFields}

@@ -68,6 +68,8 @@ export const action: ActionFunction = async ({ request }) => {
     // Processa cada tarefa para atualizar ou inserir no banco
     //for (const task of tasks) {
       for (const task of updatedData) {
+        const x = await getLastOrder()
+        console.log("último order encontrado:", x);
       // await prisma.tasks.upsert({
       //   where: { id: task.TaskID },
       //   update: {
@@ -91,7 +93,7 @@ export const action: ActionFunction = async ({ request }) => {
       //   },
       // });
       // Criação ou atualização da tarefa na tabela 'tasks'
-      console.log(">>>>>>>>>Dados recebidos, por tarefa:", task);
+      //console.log(">>>>>>>>>Dados recebidos, por tarefa:", task);
         const upsertedTask = await prisma.task.upsert({
           where: { id: task.TaskID },
           update: {

@@ -85,5 +85,5 @@ export async function getLastOrder() {
   return await prisma.task.findFirst({
     orderBy: { order: "desc" },
     select: { order: true }
-  });
+  }) || { order: 0 };
 }

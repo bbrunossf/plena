@@ -96,7 +96,7 @@ export const action: ActionFunction = async ({ request }) => {
     
     for (const task of tasks) {
       await prisma.task.upsert({
-        where: { id: parseInt(task.TaskID) },
+        where: { id: task.TaskID },
         update: {
           taskName: task.taskName,
           startDate: new Date(task.StartDate),
@@ -106,7 +106,7 @@ export const action: ActionFunction = async ({ request }) => {
           parentId: task.parentId,
         },
         create: {
-          id: parseInt(task.TaskID),
+          id: task.TaskID,
           taskName: task.taskName,
           startDate: new Date(task.StartDate),
           endDate: new Date(task.EndDate),
