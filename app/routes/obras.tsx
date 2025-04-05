@@ -1,10 +1,15 @@
+import { registerLicense } from '@syncfusion/ej2-base';
+registerLicense('Ngo9BigBOggjHTQxAR8/V1NMaF1cXGJCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdmWXxfdHVQQmZfV0J+X0U=');
+
 //import { json, type ActionArgs } from "@remix-run/node";
 import { Form, useLoaderData } from "@remix-run/react";
 import { prisma } from "~/db.server";
 import {type ClientActionFunctionArgs } from "@remix-run/react";
 import { useState } from "react";
-import { GridComponent, ColumnsDirective, ColumnDirective, Page, Inject } from '@syncfusion/ej2-react-grids';
-
+import { GridComponent, ColumnsDirective, ColumnDirective, Page, Edit, 
+  Toolbar, ToolbarItems, Inject, CommandColumn } from '@syncfusion/ej2-react-grids';
+import { Query } from '@syncfusion/ej2-data';
+import {IEditCell} from '@syncfusion/ej2-react-grids';
 
 
 
@@ -382,51 +387,78 @@ export const action = async ({ request }: ClientActionFunctionArgs) => {
 
 export default function Obras() {  
   const { obras, clientes } = useLoaderData<typeof loader>();
+  
+  const commands = [
+    { 
+      type: 'Edit', 
+      buttonOption: { cssClass: 'e-flat', iconCss: 'e-edit e-icons' } 
+    },
+    { 
+      type: 'Delete', 
+      buttonOption: { cssClass: 'e-flat', iconCss: 'e-delete e-icons' } 
+    },
+  ];
 
-  const handleEdit = (obra) => {
-    // Aqui você pode implementar a lógica para editar a obra
-    console.log("Editar obra:", obra);
+  const editSettings = { 
+    allowEditing: true,
+    allowAdding: true, 
+    allowDeleting: true,
+    mode: 'Dialog'
   };
 
-  const handleDelete = (id) => {
-    // Aqui você pode implementar a lógica para deletar a obra
-    console.log("Deletar obra com ID:", id);
+  const toolbarOptions: ToolbarItems[] = ['Add', 'Edit', 'Delete', 'Update', 'Cancel'];
+
+
+  const actionComplete = (args) => {
+    if (args.requestType === 'delete') {
+      // Implemente a lógica de exclusão aqui
+      console.log("Deletar obra com ID:", args.data[0].id_obra);
+    }
+    if (args.requestType === 'save') {
+      // Implemente a lógica de edição aqui
+      console.log("Editar obra:", args.data);
+    }
   };
 
-  const gridData = obras.map((obra) => ({
-    ...obra,
-    actions: (
-      <>
-        <button onClick={() => handleEdit(obra)} className="bg-yellow-500 text-white py-1 px-3 rounded text-sm hover:bg-yellow-600 mr-2">
-          Editar
-        </button>
-        <Form method="post" className="inline">
-          <input type="hidden" name="_action" value="delete" />
-          <input type="hidden" name="id_obra" value={obra.id_obra} />
-          <button type="submit" className="bg-red-500 text-white py-1 px-3 rounded text-sm hover:bg-red-600">
-            Excluir
-          </button>
-        </Form>
-      </>
-    )
-  }));
+  const editparams = {
+    dataSource: clientes,
+    fields: { text: 'nome_cliente', value: 'id_cliente' },
+    query: new Query().select(['id_cliente', 'nome_cliente']).take(3),
+  }
+  
+  // Defina os parâmetros do dropdown edit
+const dropDownEditParams: IEditCell = {
+  params: {
+    dataSource: clientes,
+    fields: { text: 'nome_cliente', value: 'id_cliente' },
+    query: new Query().select(['id_cliente', 'nome_cliente'])
+  }
+};
+
 
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">Gestão de Obras</h1>
       <GridComponent
-        dataSource={gridData}
+        dataSource={obras}
         allowPaging={true}
-        pageSettings={{ pageSize: 50 }}>
+        pageSettings={{ pageSize: 50 }}
+        editSettings={editSettings}
+        toolbar={toolbarOptions}
+        actionComplete={actionComplete}>
         <ColumnsDirective>
           <ColumnDirective field="cod_obra" headerText="Código" textAlign="Center" />
-          <ColumnDirective field="nome_obra" headerText="Nome" textAlign="Center" />
-          <ColumnDirective field="cliente.nome_cliente" headerText="Cliente" textAlign="Center" />
-          <ColumnDirective field="data_inicio" headerText="Data Início" textAlign="Center" format="yMd" />
-          <ColumnDirective field="total_horas_planejadas" headerText="Horas Planejadas" textAlign="Center" />
-          <ColumnDirective field="actions" headerText="Ações" textAlign="Center" width="150" />
+          <ColumnDirective field="nome_obra" width="350" headerText="Nome" textAlign="Left" />
+          
+          <ColumnDirective field="id_cliente" 
+              editType='dropdownedit' headerText="Cliente" textAlign="Center"
+              edit={dropDownEditParams} />
+          
+          <ColumnDirective field="data_inicio" editType='datepickeredit' headerText="Data Início" textAlign="Center" format="dd/MM/yyyy" />
+          <ColumnDirective field="total_horas_planejadas" editType='numericedit' headerText="Horas Planejadas" textAlign="Center" />
+          <ColumnDirective headerText="Ações" width="150" commands={commands} />
         </ColumnsDirective>
-        <Inject services={[Page]} />
+        <Inject services={[Page, Edit, Toolbar, CommandColumn]} />
       </GridComponent>
     </div>
   );
