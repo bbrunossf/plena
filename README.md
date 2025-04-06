@@ -7,6 +7,18 @@ O código desse repositório tem por objetivo armazenar registros de apontamento
 
 O projeto usa um banco de dados SQLite hospedado localmente, e o frontend foi elaborado usando o framework Remix. O projeto também utiliza Zenstack e Prisma para manipulação do banco de dados, componentes gráficos da biblioteca SyncFusion e lodash para agrupamentos.
 
+## Ferramentas utilizadas
+Banco de Dados	ORM & Stack	Linguagem	Frontend  
+<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/sqlite/sqlite-original.svg" alt="SQLite" width="50" />
+SQLite	<img src="https://raw.githubusercontent.com/prisma/prisma/main/docs/static/img/icons/prisma-logo.svg" alt="Prisma" width="50" />
+Prisma
+<img src="https://raw.githubusercontent.com/zenstackhq/zenstack/main/packages/website/public/logo-icon.svg" alt="ZenStack" width="40" />
+ZenStack	<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" alt="Python" width="50" />
+Python	<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg" alt="JavaScript" width="50" />
+JavaScript
+<img src="https://raw.githubusercontent.com/remix-run/remix/main/.github/brand/logo.svg" alt="Remix" width="50" />
+Remix
+
 ## Seções/rotas e arquivos acessórios
 ### Seções
 * Sidebar: contém barra lateral, renderizada em todas as rotas, com links manuais para as diferentes visualizações;
