@@ -144,32 +144,65 @@ export default function ProjetoHoras() {
   // });
   
   // Updated filter to include date range
-  const dadosFiltrados = registros.filter((registro) => {
-    // Check employee filter
-    if (funcionarioSelecionado && registro.nome !== funcionarioSelecionado) return false;
+  // const dadosFiltrados = registros.filter((registro) => {
+  //   // Check employee filter
+  //   if (funcionarioSelecionado && registro.nome !== funcionarioSelecionado) return false;
     
-    // Check project filter
-    if (obrasSelecionadas.length > 0 && !obrasSelecionadas.includes(registro.nome_obra)) return false;
+  //   // Check project filter
+  //   if (obrasSelecionadas.length > 0 && !obrasSelecionadas.includes(registro.nome_obra)) return false;
     
-    // Check date range filter
-    if (dataInicio) {
-      const registroDate = new Date(registro.data_hora);
-      const startDate = new Date(dataInicio);
-      // Set time to beginning of day for comparison
-      startDate.setHours(0, 0, 0, 0);
-      if (registroDate < startDate) return false;
-    }
+  //   // Check date range filter
+  //   if (dataInicio) {
+  //     const registroDate = new Date(registro.data_hora);
+  //     const startDate = new Date(dataInicio);
+  //     // Set time to beginning of day for comparison
+  //     startDate.setHours(0, 0, 0, 0);
+  //     if (registroDate < startDate) return false;
+  //   }
     
-    if (dataFim) {
-      const registroDate = new Date(registro.data_hora);
-      const endDate = new Date(dataFim);
-      // Set time to end of day for comparison
-      endDate.setHours(23, 59, 59, 999);
-      if (registroDate > endDate) return false;
-    }
+  //   if (dataFim) {
+  //     const registroDate = new Date(registro.data_hora);
+  //     const endDate = new Date(dataFim);
+  //     // Set time to end of day for comparison
+  //     endDate.setHours(23, 59, 59, 999);
+  //     if (registroDate > endDate) return false;
+  //   }
     
-    return true;
-  });
+  //   return true;
+  // });
+  // 2. Modifique a parte do filtro por data no método filter
+const dadosFiltrados = registros.filter((registro) => {
+  // Check employee filter
+  if (funcionarioSelecionado && registro.nome !== funcionarioSelecionado) return false;
+  
+  // Check project filter
+  if (obrasSelecionadas.length > 0 && !obrasSelecionadas.includes(registro.nome_obra)) return false;
+  
+  // Check date range filter
+  if (dataInicio) {
+    const registroDate = new Date(registro.data_hora);
+    
+    // Cria a data de início considerando o fuso horário local
+    const [yearStart, monthStart, dayStart] = dataInicio.split('-');
+    const startDate = new Date(yearStart, monthStart - 1, dayStart);
+    startDate.setHours(0, 0, 0, 0);
+    
+    if (registroDate < startDate) return false;
+  }
+  
+  if (dataFim) {
+    const registroDate = new Date(registro.data_hora);
+    
+    // Cria a data final considerando o fuso horário local
+    const [yearEnd, monthEnd, dayEnd] = dataFim.split('-');
+    const endDate = new Date(yearEnd, monthEnd - 1, dayEnd);
+    endDate.setHours(23, 59, 59, 999);
+    
+    if (registroDate > endDate) return false;
+  }
+  
+  return true;
+});
   
 
   const totalObras = _.uniqBy(dadosFiltrados, "nome_obra").length;
@@ -248,9 +281,23 @@ export default function ProjetoHoras() {
   const selectionSettings : SelectionSettingsModel= { mode: 'Row', type: 'Single' };
 
   // Helper function to format date for display
+  // const formatDateForDisplay = (dateString) => {
+  //   if (!dateString) return '';
+  //   const date = new Date(dateString);
+  //   return date.toLocaleDateString();
+  // };
   const formatDateForDisplay = (dateString) => {
     if (!dateString) return '';
-    const date = new Date(dateString);
+    
+    // Use o split para pegar apenas a parte da data (YYYY-MM-DD)
+    // e construa uma data no fuso horário local
+    const [year, month, day] = dateString.split('-');
+    
+    // Cria a data usando componentes específicos (ano, mês-1, dia)
+    // para evitar problemas de fuso horário
+    const date = new Date(year, month - 1, day);
+    
+    // Formata a data para exibição conforme o local
     return date.toLocaleDateString();
   };
 
