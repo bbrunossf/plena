@@ -13,8 +13,8 @@ export default function Sidebar() {
 	{ to: '/relatorioObras', label: 'Registros por Obra, por Mês' },	
     { to: '/agenda', label: 'Agenda' },
     { to: '/gantt', label: 'Cronograma' },
-	{ to: '/converter2', label: 'Conversor de Datas' },
-  { to: '/tutorial_conversor', label: 'Tutorial de Conversão de Datas' },
+	//{ to: '/converter2', label: 'Conversor de Datas' },
+  //{ to: '/tutorial_conversor', label: 'Tutorial de Conversão de Datas' },
     
   ];
 

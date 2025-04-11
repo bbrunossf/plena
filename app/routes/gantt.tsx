@@ -79,10 +79,11 @@ import {
 
 import { useState } from 'react';
 import { useFetcher } from "@remix-run/react";
-import { TreeViewComponent } from '@syncfusion/ej2-react-navigations';
+import { TreeViewComponent, NodeSelectEventArgs } from '@syncfusion/ej2-react-navigations';
 import { c } from "node_modules/vite/dist/node/types.d-aGj9QkWt";
 
 import { addDays, differenceInCalendarDays, isWithinInterval, startOfWeek, endOfWeek } from 'date-fns';
+import { TbRuler3 } from 'react-icons/tb';
 
 
 export async function loader() {
@@ -205,8 +206,11 @@ function agruparHorasPorRecurso(tasks: any[], resources: any[]) {
 
 
 
+  
+
+
 export default function GanttRoute() {  
-  const ganttRef = useRef<GanttComponent>(null);
+  const ganttRef = useRef<GanttComponent>(null);  
   const {tasks, resources, eventos, x} = useLoaderData<typeof loader>();
   const [isLoading, setIsLoading] = useState(false); // Estado para controle do spinner
   const [showPasteModal, setShowPasteModal] = useState(false); // Estado para controlar o modal
@@ -266,6 +270,30 @@ export default function GanttRoute() {
     setIsLoading(false); // Desativa o spinner
   }
   };
+
+  // Função para lidar com a seleção de um recurso
+  const onResourceSelected = (args: NodeSelectEventArgs) => {
+    console.log(args);    
+    const action = args.action; // 'select' ou 'unselect'
+
+    if (action === 'select') {
+      const selectedResource = args.nodeData.text;
+      console.log("Recurso selecionado:", selectedResource);
+      if (ganttRef.current) {
+        ganttRef.current.filterByColumn(
+          'Resources', // Campo a ser filtrado
+          'equal', // Operador
+          selectedResource // Valor
+        );
+      }
+    } else if (action === 'un-select') {
+      if (ganttRef.current) {
+        ganttRef.current.clearFiltering(); // Remove todos os filtros
+      }
+    }    
+  };
+
+  
 
   //para exibir a resposta do componente após uma ação
   const handleActionComplete = async (args: any) => {
@@ -701,7 +729,8 @@ const rowDrop = async (args: any) => {
             }}
             //sortOrder="Ascending"
             cssClass="resource-tree"
-            //nodeSelected={handleResourceSelect} // Adicionando o manipulador de seleção do recurso
+            allowMultiSelection={true}
+            nodeSelected={onResourceSelected} // Adicionando o manipulador de seleção do recurso            
           />
         </PropertyPane> 
 
