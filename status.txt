@@ -3,3 +3,9 @@ A rota em teste é 'agenda6'
 O gráfico de gantt está funcionando
 
 O MODULO DE PRODUÇÃO ESTÁ COM LINK NO BANCO DE DADOS DE TESTE!!!
+
+PARA ATUALIZAR A LICENÇA
+npx syncfusion-license activate
+Ngo9BigBOggjHTQxAR8/V1NMaF5cXmBCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdmWXtfdHVRR2ddWUx2WkFWYUE=
+**em 14/04/25, coloquei no código mesmo, porque usando o npx não estava funcionando.
+Usando somente componentes da versao 28.xx

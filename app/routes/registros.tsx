@@ -18,7 +18,8 @@ import {
   Toolbar,  
   SelectionSettingsModel,
   Selection,
-  SelectionMode    
+  SelectionMode,
+  Sort    
 } from "@syncfusion/ej2-react-grids";
 import {
   ChartComponent,
@@ -41,17 +42,20 @@ import { TreeMapComponent, LevelsDirective, LevelDirective, Inject, TreeMapToolt
 
 
 
-
+//troquei o DATETIME (r.timestamp) AS data_hora, pelo strftime para o formato brasileiro
+//ver se o filtro do 'where' está funcionando. Sim, está funcionando
 export const loader = async () => {
   const registros = await prisma.$queryRaw`
     SELECT 
       o.nome_obra,
       o.cod_obra,
       t.nome_tipo,
-	  cat.nome_categoria,
+	    cat.nome_categoria,
       p.hourlyRate,
       p.nome,
-      DATETIME (r.timestamp) AS data_hora,
+      
+      strftime('%d/%m/%Y %H:%M:%S', timestamp) AS data_hora,
+
       r.duracao_minutos AS horas_trabalhadas 
     FROM Registro r
     INNER JOIN Obra o ON r.id_obra = o.id_obra
@@ -92,8 +96,10 @@ export default function ProjetoHoras() {
       const maxDate = new Date(Math.max(...allDates));
       
       return {
-        min: minDate.toISOString().split('T')[0], // Format as YYYY-MM-DD
-        max: maxDate.toISOString().split('T')[0]
+        // min: minDate.toISOString().split('T')[0], // Format as YYYY-MM-DD //não precisa mais porque arrumei na query
+        // max: maxDate.toISOString().split('T')[0]
+        min: minDate,
+        max: maxDate
       };
     }
     
@@ -309,6 +315,8 @@ const dadosFiltrados = registros.filter((registro) => {
     setDataFim("");
   };
 
+  // const shipFormat: object = { type: 'dateTime', format: 'MM/dd/yyyy hh:mm:ss a' }; //não precisa mais porque arrumei na query
+
 
   return (
     <div className="container mx-auto p-4">
@@ -440,7 +448,8 @@ const dadosFiltrados = registros.filter((registro) => {
           <GridComponent           
           dataSource={dadosFiltrados} 
           selectionSettings={selectionSettings}  
-          allowPaging={true}                     
+          allowPaging={true}     
+          allowSorting={true}          
           >
             <ColumnsDirective>
               {/* <ColumnDirective field="nome" headerText="Funcionário" width="150" /> */}
@@ -450,7 +459,7 @@ const dadosFiltrados = registros.filter((registro) => {
               <ColumnDirective field="nome_tipo" headerText="Tipo de Tarefa" width="250" />
               {/* <ColumnDirective field="horas_trabalhadas" headerText="Horas Trabalhadas" width="150" textAlign="Right" /> */}
             </ColumnsDirective>
-            <Inject services={[Page, Toolbar, Selection]} />
+            <Inject services={[Page, Toolbar, Selection, Sort]} />
           </GridComponent>
         </div>
 

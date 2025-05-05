@@ -162,12 +162,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
+//App não está chamando o Layout, tenho que ver depois as sobreposições de formatação
+
 export default function App() {
   return (
     // <div className="flex">
       // <Sidebar />
       // {/* <main className="ml-64 flex-1 p-8"> */}
+      
         <Outlet />
+      
       // {/* </main> */}
     // </div>
   );

@@ -1,6 +1,7 @@
 import { registerLicense } from '@syncfusion/ej2-base';
 //registerLicense('Ngo9BigBOggjHTQxAR8/V1NMaF1cXGJCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdmWXxfdHVQQmZfV0J+X0U=');
 registerLicense("Ngo9BigBOggjHTQxAR8/V1NMaF5cXmBCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdmWXtfdHVRR2ddWUx2WkFWYUE=");
+import type { MetaFunction } from "@remix-run/node";
 
 import { useLoaderData } from '@remix-run/react'
 import { useRef, useEffect } from 'react';
@@ -205,6 +206,9 @@ function agruparHorasPorRecurso(tasks: any[], resources: any[]) {
 
 
 
+  
+
+
 export default function GanttRoute() {  
   const ganttRef = useRef<GanttComponent>(null);  
   const {tasks, resources, eventos, x} = useLoaderData<typeof loader>();
@@ -215,7 +219,26 @@ export default function GanttRoute() {
   const [chartData, setChartData] = useState<any[]>([]);
   const [updatedTasks, setUpdatedTasks] = useState<any[]>([]);
 
-  
+  // useEffect(() => {
+  //   const dadosGrafico = agruparHorasPorRecurso(tasks, resources); //ideal era pegar 'tasks' do gantt atualizado, e 'resources' do banco de dados
+  //   //console.log("Dados do gráfico:", dadosGrafico);
+  //   setChartData(dadosGrafico);
+  // }, [tasks, resources]);
+
+  // useEffect(() => {
+  //   // Agrupa os dados quando o componente é montado inicialmente
+  //   const initialChartData = agruparHorasPorRecurso(tasks, resources);
+  //   setChartData(initialChartData);
+  // }, [tasks, resources]); // Executa na montagem inicial e na mudança de 'tasks' ou 'resources'
+
+//   useEffect(() => {
+//     {
+//         const dadosGrafico = agruparHorasPorRecurso(updatedTasks, resources);
+//         setChartData(dadosGrafico);        
+//     }
+// }, [updatedTasks, resources]);  
+
+// console.log("Dados do gráficoxxxxxxxx:", chartData);
 
  // Função para atualizar o gráfico de colunas com os dados do Gantt
  const handleUpdateChart = () => {
@@ -255,8 +278,14 @@ export default function GanttRoute() {
       //salva os dados na sessionStorage
       sessionStorage.setItem('tasks', JSON.stringify(updatedData));
       alert("Dados salvos com sucesso!"); // Exibe mensagem de sucesso
-     
-    
+
+      
+      
+    //   const response = await fetch("/api/save-tasks", {
+    //   method: "POST",
+    //   headers: { "Content-Type": "application/json" },
+    //   body: JSON.stringify({ updatedData, deletedTasks }), // Send both updated and deleted tasks
+    // });
       setTimeout(async () => {
         const response = await fetch("/api/save-tasks", {
           method: "POST",
@@ -264,7 +293,16 @@ export default function GanttRoute() {
           body: JSON.stringify({ updatedData, deletedTasks }), // Send both updated and deleted tasks
         });
       }, 1000);
-    
+
+    // if (response.ok) {
+    //   alert("Dados salvos com sucesso!"); // Exibe mensagem de sucesso
+    // } else {
+    //   alert("Erro ao salvar os dados. Tente novamente."); // Exibe mensagem de erro
+    // }
+    // if (!response.ok) {
+    //   alert("Erro ao salvar os dados. Tente novamente"); // Exibe mensagem de sucesso
+    // } 
+
         //refresh GanttComponent
         ganttInstance.refresh();
   } catch (error) {
@@ -311,7 +349,16 @@ export default function GanttRoute() {
       setUpdatedTasks(newData); // Atualiza o estado com os novos dados      
     }       
 
-    
+    //ganttRef.current?.fitToProject(); //a cada ação, muda o zoom pra caber na tela, não deu certo
+
+    // if (args.data) {
+    //   console.log("Ação completada! (request e data):", args.requestType, args.data);
+    // }
+    // if (args) {
+    //   console.log("Ação completada!! (=================args completo=============):", args);
+    // }    
+
+
     if (args.requestType === 'delete') {
       deletedTasks.push(...args.data); // Add deleted tasks to the array
       console.log('Tarefas excluídas:', deletedTasks);
@@ -529,6 +576,40 @@ const resColumnTemplate = (props) => {
 
 const template = resColumnTemplate.bind(this);
 
+// const rowDrop = async (args: any) => {
+//   //args.fromIndex é o índice original da linha que foi movida (contagem começa em 0) *ok, vai ser o "record"
+//   //args.dropIndex é o índice onde a linha foi solta (contagem começa em 0)  *ok, vai ser o "record2"
+//   //args.dropRecord é o conteúdo inteiro da tarefa que cedeu lugar, e tem o novo index em dropRecord.index
+//   //let record = args.data[0]; //é o conteúdo inteiro da linha que foi movida  *ok, vai ser o "data"
+
+//   // Obter o ID da tarefa arrastada
+//   const dragidMapping = args.data[0].taskData.TaskID;
+  
+//   // Obter o ID da tarefa de destino
+//   const dropidMapping = args.dropRecord?.taskData?.TaskID || null; // Pode ser null se for root
+  
+
+//   const payload = {
+//     dragidMapping: args.data[0].taskData.TaskID, // ID da tarefa que está sendo arrastada
+//     dropidMapping: args.dropRecord?.taskData.TaskID || null, // ID da tarefa de destino
+//     dragorderMapping: args.data[0].taskData.order, // order da tarefa que está sendo arrastada
+//     droporderMapping: args.dropRecord?.taskData.order || null, // order da tarefa de destino
+//     // position: args.dropPosition, // Posição (bottomSegment, topSegment, middleSegment)
+//     // record: {
+//     //     taskID: args.data[0].taskData.TaskID, // Usado para identificação
+//     //     parentID: args.data[0].taskData.parentId, // ID do pai atual
+//     //     order: args.data[0].taskData.order // Ordem atual da tarefa que está sendo arrastada
+//     //}
+// };
+  
+//   console.log('==========================Payload Enviado:', JSON.stringify(payload, null, 2));
+//   // Enviar para a API
+//      const response = await fetch("/api/task-reorder", {
+//       method: "POST",
+//       headers: { "Content-Type": "application/json" },
+//       body: JSON.stringify( payload),   
+//     });
+//   }
 
 const rowDrop = async (args: any) => {
   console.log(args);
@@ -719,6 +800,45 @@ function dataBound() {
       {/* <div className='w-1/4 flex flex-col'>  Coluna 2: Schedule, PropertyPane e Botão (ocupa 1/4 da largura, dispostos em coluna, ou seja, um abaixo do outro) */}
       {/* <div className='w-full'> */}
       <div className='w-full mt-4 pr-4'>
+
+        
+        {/* <div className='mb-1'>  ScheduleComponent 
+          <ScheduleComponent
+              width='70%'
+              height='450px'
+              selectedDate={new Date()}
+              currentView='Agenda'
+                 
+              eventSettings={{
+                dataSource: eventos,
+                fields: {
+                  Id: 'id',
+                  Subject: 'titulo',
+                  Description: 'descricao',
+                  StartTime: 'data_hora_inicio',
+                  IsAllDay: 'dia_inteiro',
+                  ObraId: 'id_obra',
+                  entregue: 'entregue',
+                  entregue_em: 'entregue_em',
+                }
+              }}
+              //group={{ resources: ['Resources'] }}
+
+              agendaDaysCount={15}  
+              > 
+              <ViewsDirective>                
+                <ViewDirective option='Day' />  
+                <ViewDirective option='Week' />                
+                <ViewDirective option='Month' />
+                <ViewDirective option='Agenda' allowVirtualScrolling={false}/>                
+                <ViewDirective option='TimelineDay' />
+                <ViewDirective option='TimelineMonth' />
+                </ViewsDirective>
+                
+            <Inject services={[Agenda, DragAndDrop, Resize, Month, Week, Day]} />
+          </ScheduleComponent>
+          
+        </div> */}
         
       <button onClick={handleUpdateChart} className="bg-blue-100 text-white p-2 rounded">
         Atualizar Gráfico
