@@ -13,6 +13,7 @@ export default function Sidebar() {
 	{ to: '/relatorioObras', label: 'Registros por Obra, por Mês' },	
     { to: '/agenda', label: 'Agenda' },
     { to: '/gantt', label: 'Cronograma' },
+    { to: '/changepassword', label: 'Alterar senha', className: 'text-red-500' },
 	//{ to: '/converter2', label: 'Conversor de Datas' },
   //{ to: '/tutorial_conversor', label: 'Tutorial de Conversão de Datas' },
     
@@ -30,7 +31,7 @@ export default function Sidebar() {
                   to={link.to}
                   className={`block p-2 rounded hover:bg-gray-700 transition-colors ${
                     location.pathname === link.to ? 'bg-gray-700' : ''
-                  }`}
+                  } ${link.className || ''}`}
                 >
                   {link.label}
                 </Link>

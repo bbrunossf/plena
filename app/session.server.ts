@@ -7,6 +7,7 @@ import { verifyLogin, getUserById } from "~/user.server";
 
 invariant(process.env.SESSION_SECRET, "SESSION_SECRET must be set");
 
+//mudei o secure: process.env.NODE_ENV === "production",
 export const sessionStorage = createCookieSessionStorage({
   cookie: {
     name: "__session",
@@ -14,7 +15,7 @@ export const sessionStorage = createCookieSessionStorage({
     path: "/",
     sameSite: "lax",
     secrets: [process.env.SESSION_SECRET],
-    secure: process.env.NODE_ENV === "production",
+    secure: process.env.USE_HTTPS === "true",
   },
 });
 

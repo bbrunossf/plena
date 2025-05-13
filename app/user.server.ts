@@ -36,3 +36,41 @@ export async function verifyLogin(
 
   return userWithoutPassword;
 }
+
+export async function changeUserPassword(
+  userId: number, 
+  currentPassword: string, 
+  newPassword: string
+) {
+  // Busca o usuário pelo ID
+  const user = await prisma.user.findUnique({ 
+    where: { id: userId } 
+  });
+
+  if (!user) {
+    throw new Error("Usuário não encontrado");
+  }
+
+  // Verifica a senha atual
+  const isCurrentPasswordValid = await bcrypt.compare(
+    currentPassword, 
+    user.password
+  );
+
+  if (!isCurrentPasswordValid) {
+    throw new Error("Senha atual incorreta");
+  }
+
+  // Gera novo hash para a nova senha
+  const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+  // Atualiza a senha no banco de dados
+  await prisma.user.update({
+    where: { id: userId },
+    data: { 
+      password: hashedNewPassword      
+    }
+  });
+
+  return { message: "Senha alterada com sucesso" };
+}

@@ -31,14 +31,25 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
 
-  const user = await verifyLogin(name, password);;
-
-  return createUserSession({
-    request,
-    userId: user.id,
-    remember: remember === "on",
-    redirectTo: typeof redirectTo === "string" ? redirectTo : "/",
-  });
+  try {
+    const user = await verifyLogin(name, password);
+    
+    return createUserSession({
+      request,
+      userId: user.id,
+      remember: remember === "on",
+      redirectTo: typeof redirectTo === "string" ? redirectTo : "/",
+    });
+  } catch (error) {
+    return json(
+      { 
+        errors: { 
+          login: "Nome de usuário ou senha incorretos. Por favor, tente novamente." 
+        } 
+      },
+      { status: 401 }
+    );
+  }
 };
 
 export default function Login() {
@@ -59,6 +70,12 @@ export default function Login() {
   return (
     <div className="flex min-h-full flex-col justify-center">
       <div className="mx-auto w-full max-w-md px-8">
+        {actionData?.errors?.login && (
+          <div className="mb-4 rounded bg-red-100 p-3 text-red-700">
+            {actionData.errors.login}
+          </div>
+        )}
+        
         <Form method="post" className="space-y-6">
           <div>
             <label htmlFor="name" className="block text-sm font-medium">
