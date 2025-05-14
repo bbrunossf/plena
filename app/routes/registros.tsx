@@ -60,7 +60,7 @@ export const loader = async () => {
     FROM Registro r
     INNER JOIN Obra o ON r.id_obra = o.id_obra
     INNER JOIN TipoTarefa t ON r.id_tipo_tarefa = t.id_tipo_tarefa
-	INNER JOIN Categoria cat ON r.id_categoria = cat.id_categoria
+	  INNER JOIN Categoria cat ON r.id_categoria = cat.id_categoria
     INNER JOIN Pessoa p ON r.id_nome = p.id_nome
     WHERE r."timestamp" > "2025-01-01"   
     ORDER BY r.timestamp DESC, t.nome_tipo

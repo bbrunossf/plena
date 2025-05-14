@@ -480,7 +480,19 @@ class ProjectTrackingWindow:
         
         self.setup_gui()
         
-            
+
+    
+    def verificar_hora_extra(self, hora_extra_checkbox):     
+        agora = datetime.now() # Obtém a data e hora atual    
+        fim_de_semana = agora.weekday() >= 5 # Verifica se hoje é sábado (5) ou domingo (6)     
+        depois_das_dezenove = agora.hour > 19 # Verifica se a hora atual é maior que 19h 
+        
+        # Se for fim de semana ou hora atual é além das 19h, marca a checkbox 'hora extra?' 
+        if fim_de_semana or depois_das_dezenove:
+            self.hora_extra_checkbox.select() # Marca a caixa de seleção
+        else:
+            self.hora_extra_checkbox.deselect() # Desmarca a caixa de seleção
+
     def setup_gui(self):
         # Project selection
         project_frame = tk.Frame(self.window)
@@ -568,7 +580,7 @@ class ProjectTrackingWindow:
         
         # Query to get the last entry's IDs for the current user
         self.cursor.execute("""
-            SELECT id_obra, id_tipo_tarefa, id_categoria 
+            SELECT id_obra, id_tipo_tarefa, id_categoria, hora_extra 
             FROM Registro 
             WHERE id_nome = ? 
             ORDER BY timestamp DESC 
@@ -578,7 +590,7 @@ class ProjectTrackingWindow:
         last_entry = self.cursor.fetchone()
         
         if last_entry:
-            last_project_id, last_task_id, last_category_id = last_entry
+            last_project_id, last_task_id, last_category_id, last_hora_extra_bool = last_entry
             
             # Get text values with combined cod_obra and nome_obra
             self.cursor.execute("SELECT cod_obra || ' - ' || nome_obra FROM Obra WHERE id_obra = ?", (last_project_id,))
@@ -589,6 +601,9 @@ class ProjectTrackingWindow:
             
             self.cursor.execute("SELECT nome_categoria FROM Categoria WHERE id_categoria = ?", (last_category_id,))
             last_category = self.cursor.fetchone()[0]
+
+            self.cursor.execute("SELECT hora_extra FROM Registro WHERE hora_extra = ?", (last_hora_extra_bool,))
+            last_hora_extra = self.cursor.fetchone()[0]
             
             # Set the project dropdown
             self.project_dropdown.set(last_project)
@@ -599,7 +614,12 @@ class ProjectTrackingWindow:
             self.update_categoria()  # This populates category dropdown
             
             # Set the category dropdown
-            self.task_dropdown2.set(last_category) 
+            self.task_dropdown2.set(last_category)
+
+            # Set the hora extra checkbox
+            self.hora_extra_var.set(last_hora_extra)  
+
+            
     
     
     def update_tasks(self, event=None):
@@ -634,6 +654,11 @@ class ProjectTrackingWindow:
         
         # Print out all children names
         #print("Available children:", list(self.window.master.winfo_toplevel().children.keys()))
+
+        # Obtenha a referência da checkbox 'hora extra?'
+        hora_extra_checkbox = self.hora_extra_checkbox # Certifique-se de que você tem a referência correta
+        # Chama a função verificar_hora_extra para marcar ou desmarcar a checkbox 
+        self.verificar_hora_extra(hora_extra_checkbox)
         
     
         # Obtenha os valores selecionados nos dropdowns
@@ -662,7 +687,8 @@ class ProjectTrackingWindow:
                 nome_tipo=task_id,
                 nome_categoria=category_id,
                 duracao_minutos=self.custom_duration,  # Use the custom duration
-                hora_extra=self.hora_extra_var.get()
+                #hora_extra=self.hora_extra_var.get()
+                hora_extra=self.hora_extra_var.get() # Obtém o estado da checkbox
             )
             
             # Store a reference to the parent CountdownTimer
@@ -919,7 +945,7 @@ class CountdownTimer:
         
     def check_and_update(self):
         updater = AutoUpdater(
-            current_version="6",
+            current_version="10",
             check_url=r"Z:\planejamento\NovoTimer\version.json",
             update_url=r"Z:\planejamento\NovoTimer\Timer_Plena.exe"
         )
