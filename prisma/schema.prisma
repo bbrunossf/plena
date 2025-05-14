@@ -59,6 +59,7 @@ model Registro {
   id_tipo_tarefa  Int
   id_categoria    Int
   duracao_minutos Int        @default(60)
+  hora_extra      Boolean    @default(false)
   pessoa          Pessoa     @relation(fields: [id_nome], references: [id_nome])
   obra            Obra       @relation(fields: [id_obra], references: [id_obra])
   tipoTarefa      TipoTarefa @relation(fields: [id_tipo_tarefa], references: [id_tipo_tarefa])
