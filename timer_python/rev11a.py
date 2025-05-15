@@ -575,7 +575,7 @@ class ProjectTrackingWindow:
             messagebox.showinfo("Configuração", "Caminho do banco de dados atualizado.")
     
     def load_last_entry(self):
-        # Get the user name from config
+        # Get the user name from config; 'Bruno' se não houver valor no config.ini
         user_name = self.config['User'].get('name', 'Bruno')
         
         # Query to get the last entry's IDs for the current user
@@ -616,7 +616,7 @@ class ProjectTrackingWindow:
             # Set the category dropdown
             self.task_dropdown2.set(last_category)
 
-            # Set the hora extra checkbox
+            # Do not Set the hora extra checkbox, porque vai depedender da hora do dia? Ver com dayana
             self.hora_extra_var.set(last_hora_extra)  
 
             
@@ -945,7 +945,7 @@ class CountdownTimer:
         
     def check_and_update(self):
         updater = AutoUpdater(
-            current_version="10",
+            current_version="11",
             check_url=r"Z:\planejamento\NovoTimer\version.json",
             update_url=r"Z:\planejamento\NovoTimer\Timer_Plena.exe"
         )
@@ -1131,5 +1131,6 @@ Falta: função pra inserir mais de um lançamento
 ativar/desativar usuário (somente se usuário for Bruno ou Leonardo)
 Incluir botão de 'repetir', para tentar conectar ao banco de novo antes de desistir
 Incluir logo/ícone
-Formatar as datas para dia/mes/ano
+Formatar as datas para dia/mes/ano (mas aí tem que mudar no frontend tambem, eu acho)
+Esqueci de incluir a lista de feriados
 """
