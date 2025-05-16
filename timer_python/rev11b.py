@@ -328,12 +328,44 @@ class AutoUpdater:
 
 
 class DatabaseManager:
+    _instance = None
+    
+    @classmethod
+    def get_instance(cls, db_path=None):
+        if cls._instance is None:
+            if db_path is None:
+                raise ValueError("Database path must be provided for first initialization")
+            cls._instance = cls(db_path)
+        return cls._instance
+    
     def __init__(self, db_path):
+        # Este método deve ser chamado apenas internamente através de get_instance
+        if DatabaseManager._instance is not None:
+            raise Exception("This class is a singleton. Use get_instance() instead.")
+        
         # Connect to database and create tables if they don't exist
-        self.conn = sqlite3.connect(db_path)
-        self.cursor = self.conn.cursor()
-        #self.create_tables()
-        #self.insert_sample_data()
+        self.db_path = db_path
+        self.conn = None
+        self.cursor = None
+        self.connect()
+    
+    def connect(self):
+        """Estabelece conexão com o banco de dados"""
+        if self.conn is None:
+            self.conn = sqlite3.connect(self.db_path)
+            self.cursor = self.conn.cursor()
+            
+    def close(self):
+        """Fecha a conexão com o banco de dados"""
+        if self.conn:
+            self.conn.close()
+            self.conn = None
+            self.cursor = None
+            
+    def reconnect(self):
+        """Reconecta ao banco de dados se a conexão estiver fechada"""
+        self.close()
+        self.connect()
         
     def create_tables(self):
         # Projects table
@@ -445,8 +477,7 @@ class DatabaseManager:
         """, (timestamp, nome, cod_obra, nome_tipo, nome_categoria, duracao_minutos, hora_extra))
         self.conn.commit()
     
-    def close(self):
-        self.conn.close()
+    
 
 class ProjectTrackingWindow:
     def __init__(self, parent, db_manager, config, timer_instance=None, custom_duration=60):
@@ -457,7 +488,9 @@ class ProjectTrackingWindow:
         self.config = config  # Adicione esta linha
         self.timer_instance = timer_instance  # Store the timer instance
         self.custom_duration = custom_duration  # Add this line
-        self.cursor = self.db_manager.conn.cursor() #para permitir queries.. precisa mesmo?
+        #self.cursor = self.db_manager.conn.cursor() #para permitir queries.. precisa mesmo?
+        self.cursor = self.db_manager.cursor  # Reutiliza o cursor já existente
+
         
         
         # Set window size and center it
@@ -787,15 +820,19 @@ class CountdownTimer:
         attempt = 1
         while attempt <= max_attempts:
             try:
-                # Tenta conectar ao banco de dados
-                db_manager = DatabaseManager(self.config['Database']['path'])
+                # Tenta obter ou criar a instância do gerenciador de banco de dados
+                db_manager = DatabaseManager.get_instance(self.config['Database']['path'])
+                
+                # Se a conexão estiver fechada, reconecta
+                if db_manager.conn is None:
+                    db_manager.connect()
                 
                 # Verifica se a conexão e as consultas estão funcionando
                 if self.check_database_connection(db_manager):
                     return db_manager
                 
-                # Se a verificação falhar, fecha a conexão e tenta novamente
-                db_manager.close()
+                # Se a verificação falhar, força uma reconexão e tenta novamente
+                db_manager.reconnect()
             
             except Exception as e:
                 print(f"Tentativa {attempt} falhou: {e}")
@@ -825,21 +862,25 @@ class CountdownTimer:
                 return False
             
             # Verifica se as consultas necessárias retornam resultados
-            cursor = db_manager.conn.cursor()
+            #cursor = db_manager.conn.cursor()
             
             # Verifica se há projetos no banco de dados
-            cursor.execute("SELECT COUNT(*) FROM Obra")
-            if cursor.fetchone()[0] == 0:
+            #cursor.execute("SELECT COUNT(*) FROM Obra")
+            #if cursor.fetchone()[0] == 0:
+            #    return False
+            # Usa o cursor já existente no db_manager
+            db_manager.cursor.execute("SELECT COUNT(*) FROM Obra")
+            if db_manager.cursor.fetchone()[0] == 0:
                 return False
             
             # Verifica se há tipos de tarefa no banco de dados
-            cursor.execute("SELECT COUNT(*) FROM TipoTarefa")
-            if cursor.fetchone()[0] == 0:
+            db_manager.cursor.execute("SELECT COUNT(*) FROM TipoTarefa")
+            if db_manager.cursor.fetchone()[0] == 0:
                 return False
             
             # Verifica se há categorias no banco de dados
-            cursor.execute("SELECT COUNT(*) FROM Categoria")
-            if cursor.fetchone()[0] == 0:
+            db_manager.cursor.execute("SELECT COUNT(*) FROM Categoria")
+            if db_manager.cursor.fetchone()[0] == 0:
                 return False
             
             return True
@@ -1010,9 +1051,11 @@ class CountdownTimer:
     
     def set_user_name(self):
         # Get list of names from the database
-        self.cursor = self.db_manager.conn.cursor()
-        self.cursor.execute("SELECT nome FROM Pessoa ORDER BY nome")
-        user_names = [row[0] for row in self.cursor.fetchall()]
+        #self.cursor = self.db_manager.conn.cursor()
+        #self.cursor.execute("SELECT nome FROM Pessoa ORDER BY nome")
+        self.db_manager.cursor.execute("SELECT nome FROM Pessoa ORDER BY nome")
+        #user_names = [row[0] for row in self.cursor.fetchall()]
+        user_names = [row[0] for row in self.db_manager.cursor.fetchall()]
         
         # Create a dialog for user selection
         user_name = simpledialog.askstring(
@@ -1104,6 +1147,12 @@ class CountdownTimer:
                     self.db_manager = self.initialize_database_with_retry()
                     if self.db_manager:
                         continue  # Se conseguiu conectar, continua o loop para verificar a conexão
+                    else:
+                        messagebox.showerror(
+                            "Erro de Conexão",
+                            "Não foi possível reconectar ao banco de dados. O aplicativo será encerrado."
+                        )
+                        self.on_closing()
                 else:
                     return  # Se o usuário cancelou, sai da função
             
