@@ -6,6 +6,17 @@ O MODULO DE PRODUÇÃO ESTÁ COM LINK NO BANCO DE DADOS DE TESTE!!!
 
 PARA ATUALIZAR A LICENÇA
 npx syncfusion-license activate
-Ngo9BigBOggjHTQxAR8/V1NMaF5cXmBCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdmWXtfdHVRR2ddWUx2WkFWYUE=
+//Ngo9BigBOggjHTQxAR8/V1NMaF5cXmBCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdmWXtfdHVRR2ddWUx2WkFWYUE= // não usar mais essa
 **em 14/04/25, coloquei no código mesmo, porque usando o npx não estava funcionando.
 Usando somente componentes da versao 28.xx
+
+** em 19/05, seguem as novas chaves refeitas no site:
+VERSÃO 27
+UNLOCK KEY		@32372e302e30G1PoqEO4dQvoiW2D16TuBTUDwjJ1OeSDDzyneNNJEcQ=
+LICENSE KEY		ORg4AjUWIQA/Gnt2UlhhQlVMfV5AQmBIYVp/TGpJfl96cVxMZVVBJAtUQF1hTH5Wd0xjX3xfc3VdQWFbWkZx
+
+
+
+VERSÃO 28
+UNLOCK KEY		@32382e302e30mS1u1mTKPknjHQzWjKMF0XzQyT0rrNyf5H5Nr1oIrKM=
+LICENSE KEY 	ORg4AjUWIQA/Gnt2XVhhQlJHfV5AQmBIYVp/TGpJfl96cVxMZVVBJAtUQF1hTH5Wd0xjX31Xc31cQ2hbWkZ+

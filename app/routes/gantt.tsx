@@ -1,6 +1,5 @@
 import { registerLicense } from '@syncfusion/ej2-base';
-//registerLicense('Ngo9BigBOggjHTQxAR8/V1NMaF1cXGJCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdmWXxfdHVQQmZfV0J+X0U=');
-registerLicense("Ngo9BigBOggjHTQxAR8/V1NMaF5cXmBCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdmWXtfdHVRR2ddWUx2WkFWYUE=");
+registerLicense("ORg4AjUWIQA/Gnt2XVhhQlJHfV5AQmBIYVp/TGpJfl96cVxMZVVBJAtUQF1hTH5Wd0xjX31Xc31cQ2hbWkZ+"); // licença da versão 28
 
 import { useLoaderData } from '@remix-run/react'
 import { useRef, useEffect } from 'react';
