@@ -22,13 +22,13 @@ function fromJulianDay(julianDay: number) {
 
 export async function loader() {
   // Get dates from database - now getting all records instead of just one
-//   const dates = await prisma.obra.findMany({
-//     select: {
-//       id_obra: true,
-//       data_inicio: true,
-//     },
-//   });
-  const dates = await prisma.$queryRaw`SELECT strftime('%Y-%m-%d', data_inicio) AS data_inicio FROM Obra LIMIT 5`;
+  const dates = await prisma.obra.findMany({
+    select: {
+      id_obra: true,
+      data_inicio: true,
+    },
+  });
+  //const dates = await prisma.$queryRaw`SELECT strftime('%Y-%m-%d', data_inicio) AS data_inicio FROM Obra LIMIT 5`;
   console.log(dates);
 
   console.log('antes de formatar:', dates.map(date => date.data_inicio));

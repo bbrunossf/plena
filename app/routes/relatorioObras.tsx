@@ -27,28 +27,84 @@ import { RadioButtonComponent } from "@syncfusion/ej2-react-buttons";
 
 export const loader = async () => {
   // Fetch all records with relevant joins
-  const registros = await prisma.$queryRaw`
-    SELECT 
-      o.id_obra,
-      o.nome_obra,
-      o.cod_obra,
-      DATETIME (r.timestamp) AS data_hora,
-      r.duracao_minutos AS horas_trabalhadas,
-      strftime('%Y-%m', r.timestamp) AS ano_mes
-    FROM Registro r
-    INNER JOIN Obra o ON r.id_obra = o.id_obra
-    WHERE r."timestamp" > "2025-01-01"   
-    ORDER BY r.timestamp DESC
-  `;
+  // const registros = await prisma.$queryRaw`
+  //   SELECT 
+  //     o.id_obra,
+  //     o.nome_obra,
+  //     o.cod_obra,
+  //     DATETIME (r.timestamp) AS data_hora,
+  //     r.duracao_minutos AS horas_trabalhadas,
+  //     strftime('%Y-%m', r.timestamp) AS ano_mes
+  //   FROM Registro r
+  //   INNER JOIN Obra o ON r.id_obra = o.id_obra
+  //   WHERE r."timestamp" > "2025-01-01"   
+  //   ORDER BY r.timestamp DESC
+  // `;
+  const registros = await prisma.registro.findMany({                  
+      select: {
+        timestamp: true,
+        duracao_minutos: true,
+        hora_extra: true,
+        
+        obra: {
+          select: {
+            id_obra: true,
+            nome_obra: true,
+            cod_obra: true,
+          },
+        },
+
+        tipoTarefa: {
+          select: {
+            nome_tipo: true,
+          },
+        },
+
+        categoria: {
+          select: {
+            nome_categoria: true,
+          },
+        },
+
+        pessoa: {
+          select: {
+            nome: true,
+            id_nome: true,
+            hourlyRate: true,
+          },
+        }, 
+      },
+      where: { 
+        timestamp: {
+          gte: new Date("2025-01-01"), // Data de início do filtro
+        },
+      },
+      orderBy: [
+        {
+          timestamp: "desc",
+        },
+        {
+          tipoTarefa: {
+            nome_tipo: "asc",
+          },
+        },
+      ],      
+    });
+//não é possível criar coluna 'ano_mes' diretamente no Prisma,
+//então usamos map para adicionar essa coluna após a consulta
+const registrosComAnoMes = registros.map((r) => ({
+  ...r,
+  ano_mes: new Date(r.timestamp).toISOString().slice(0, 7) // Formato 'YYYY-MM'
+}));    
 
   // Get unique projects
-  const obras = _.uniqBy(registros, "id_obra").map(r => ({
-    id: r.id_obra,
-    nome: r.nome_obra,
-    cod_obra: r.cod_obra
+  const obras = _.uniqBy(registros, "obra.id_obra").map(r => ({
+    id: r.obra.id_obra,
+    nome: r.obra.nome_obra,
+    cod_obra: r.obra.cod_obra
   }));
 
-  return ({ registros, obras });
+  return ({ registros: registrosComAnoMes, obras });
 };
 
 export default function RelatorioMensalObras() {
@@ -60,7 +116,7 @@ export default function RelatorioMensalObras() {
 
   // Extract all available years from the data
   const anosDisponiveis = _.uniq(
-    registros.map(r => new Date(r.data_hora).getFullYear().toString())
+    registros.map(r => new Date(r.timestamp).getFullYear().toString())
   ).sort().reverse();
 
   // If the current year is not in the data, default to the most recent year
@@ -70,8 +126,8 @@ export default function RelatorioMensalObras() {
 
   // Filter records by selected project
   const registrosObra = registros.filter(r => 
-    r.id_obra === obraSelecionada && 
-    r.data_hora.startsWith(ano)
+    r.obra.id_obra === obraSelecionada &&
+    new Date(r.timestamp).getFullYear().toString().startsWith(ano)
   );
 
   // Group data by month and sum hours
@@ -91,7 +147,7 @@ export default function RelatorioMensalObras() {
     registrosObra.forEach(registro => {
       const monthKey = registro.ano_mes;
       if (monthsMap[monthKey]) {
-        monthsMap[monthKey].totalHours += _.round((registro.horas_trabalhadas / 60), 2); // Convert minutes to hours
+        monthsMap[monthKey].totalHours += _.round((registro.duracao_minutos / 60), 2); // Convert minutes to hours
       }
     });
 

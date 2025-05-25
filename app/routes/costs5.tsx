@@ -15,20 +15,60 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     await requireAdmin(request);
 
     // Busca todos os dados necessários de uma vez
-    const registros = await prisma.$queryRaw`
-      SELECT 
-        o.nome_obra,
-        o.cod_obra,
-        t.nome_tipo,
-        p.hourlyRate,
-        p.nome,
-        r.duracao_minutos AS horas_trabalhadas 
-      FROM Registro r
-      INNER JOIN Obra o ON r.id_obra = o.id_obra
-      INNER JOIN TipoTarefa t ON r.id_tipo_tarefa = t.id_tipo_tarefa
-      INNER JOIN Pessoa p ON r.id_nome = p.id_nome   
-      ORDER BY o.nome_obra, t.nome_tipo
-    `;
+    // const registros = await prisma.$queryRaw`
+    //   SELECT 
+    //     o.nome_obra,
+    //     o.cod_obra,
+    //     t.nome_tipo,
+    //     p.hourlyRate,
+    //     p.nome,
+    //     r.duracao_minutos AS horas_trabalhadas 
+    //   FROM Registro r
+    //   INNER JOIN Obra o ON r.id_obra = o.id_obra
+    //   INNER JOIN TipoTarefa t ON r.id_tipo_tarefa = t.id_tipo_tarefa
+    //   INNER JOIN Pessoa p ON r.id_nome = p.id_nome   
+    //   ORDER BY o.nome_obra, t.nome_tipo
+    // `;
+    const registros = await prisma.registro.findMany({                  
+      select: {
+        timestamp: false,
+        duracao_minutos: true,
+        hora_extra: true,
+        
+        obra: {
+          select: {
+            nome_obra: true,
+            cod_obra: true,
+          },
+        },
+
+        tipoTarefa: {
+          select: {
+            nome_tipo: true,
+          },
+        },        
+
+        pessoa: {
+          select: {
+            nome: true,
+            hourlyRate: true,
+          },
+        }, 
+      },
+      where: { 
+        timestamp: {
+          gte: new Date("2025-01-01"), // Data de início do filtro
+        },
+      },
+      orderBy: [        
+        {
+          obra: {
+            nome_obra: "asc",
+          },
+          
+        },
+      ],      
+    });
 
     // Retorna os registros no formato JSON
     return ({ registros });
@@ -44,43 +84,43 @@ export default function Costs() {
         switch (viewType) {
           case 'obra':
             return _.chain(registros)
-              .groupBy('nome_obra')
+              .groupBy('obra.nome_obra')
               .map((group, key) => ({
                 categoria: key,
-                codigo: group[0].cod_obra,
-                total_horas: _.sumBy(group, r => r.horas_trabalhadas / 60),
-                custo_total: _.sumBy(group, r => r.horas_trabalhadas / 60 * r.hourlyRate),
-                pessoas_envolvidas: _.uniqBy(group, 'nome').length,
-                tipos_tarefa: _.uniqBy(group, 'nome_tipo').length,
-                custo_medio_hora: _.meanBy(group, r => r.hourlyRate)
+                codigo: group[0].obra.cod_obra,
+                total_horas: _.sumBy(group, r => r.duracao_minutos / 60),
+                custo_total: _.sumBy(group, r => r.duracao_minutos / 60 * r.pessoa.hourlyRate),
+                pessoas_envolvidas: _.uniqBy(group, 'pessoa.nome').length,
+                tipos_tarefa: _.uniqBy(group, 'tipoTarefa.nome_tipo').length,
+                custo_medio_hora: _.meanBy(group, r => r.pessoa.hourlyRate)
               }))                          
               .orderBy(['nome_obra', 'custo_total'], ['asc', 'desc'])
               .value();
   
           case 'tipo':
             return _.chain(registros)
-              .groupBy('nome_tipo')
+              .groupBy('tipoTarefa.nome_tipo')
               .map((group, key) => ({
                 categoria: key,
-                total_horas: _.sumBy(group, r => r.horas_trabalhadas / 60),
-                custo_total: _.sumBy(group, r => r.horas_trabalhadas / 60 * r.hourlyRate),
-                obras_relacionadas: _.uniqBy(group, 'nome_obra').length,
-                pessoas_envolvidas: _.uniqBy(group, 'nome').length,
-                custo_medio_hora: _.meanBy(group, r => r.hourlyRate)
+                total_horas: _.sumBy(group, r => r.duracao_minutos / 60),
+                custo_total: _.sumBy(group, r => r.duracao_minutos / 60 * r.pessoa.hourlyRate),
+                obras_relacionadas: _.uniqBy(group, 'obra.nome_obra').length,
+                pessoas_envolvidas: _.uniqBy(group, 'pessoa.nome').length,
+                custo_medio_hora: _.meanBy(group, r => r.pessoa.hourlyRate)
               }))
               .orderBy(['total_horas'], ['desc'])
               .value();
   
           case 'pessoa':
             return _.chain(registros)
-              .groupBy('nome')
+              .groupBy('pessoa.nome')
               .map((group, key) => ({
                 categoria: key,
-                total_horas: _.sumBy(group, r => r.horas_trabalhadas / 60),
-                custo_total: _.sumBy(group, r => r.horas_trabalhadas / 60 * r.hourlyRate),
-                obras_envolvidas: _.uniqBy(group, 'nome_obra').length,
-                tipos_realizados: _.uniqBy(group, 'nome_tipo').length,
-                valor_hora: group[0].hourlyRate
+                total_horas: _.sumBy(group, r => r.duracao_minutos / 60),
+                custo_total: _.sumBy(group, r => r.duracao_minutos / 60 * r.pessoa.hourlyRate),
+                obras_envolvidas: _.uniqBy(group, 'obra.nome_obra').length,
+                tipos_realizados: _.uniqBy(group, 'tipoTarefa.nome_tipo').length,
+                valor_hora: group[0].pessoa.hourlyRate
               }))
               .orderBy(['custo_total'], ['desc'])
               .value();

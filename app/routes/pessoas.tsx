@@ -1,3 +1,5 @@
+//Para incluir o campo custo de hora extra, é necessário adicionar o campo no banco de dados e no Prisma.
+
 import { Form, useLoaderData } from "@remix-run/react";
 import { prisma } from "~/db.server";
 import {type ClientActionFunctionArgs } from "@remix-run/react";

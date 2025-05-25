@@ -28,36 +28,93 @@ import { RadioButtonComponent } from "@syncfusion/ej2-react-buttons";
 
 export const loader = async () => {
   // Fetch all records with relevant joins
-  const registros = await prisma.$queryRaw`
-    SELECT 
-      p.id_nome,
-      p.nome,
-      p.hourlyRate,
-      o.nome_obra,
-      o.cod_obra,
-      t.nome_tipo,
-      cat.nome_categoria,
-      DATETIME (r.timestamp) AS data_hora,
-      r.duracao_minutos AS horas_trabalhadas,
-      strftime('%Y-%m', r.timestamp) AS ano_mes
-    FROM Registro r
-    INNER JOIN Obra o ON r.id_obra = o.id_obra
-    INNER JOIN TipoTarefa t ON r.id_tipo_tarefa = t.id_tipo_tarefa
-    INNER JOIN Categoria cat ON r.id_categoria = cat.id_categoria
-    INNER JOIN Pessoa p ON r.id_nome = p.id_nome
-    WHERE r."timestamp" > "2025-01-01"   
-    ORDER BY r.timestamp DESC
-  `;
+  // const registros = await prisma.$queryRaw`
+  //   SELECT 
+  //     p.id_nome,
+  //     p.nome,
+  //     p.hourlyRate,
+  //     o.nome_obra,
+  //     o.cod_obra,
+  //     t.nome_tipo,
+  //     cat.nome_categoria,
+  //     DATETIME (r.timestamp) AS data_hora,
+  //     r.duracao_minutos AS horas_trabalhadas,
+  //     strftime('%Y-%m', r.timestamp) AS ano_mes
+  //   FROM Registro r
+  //   INNER JOIN Obra o ON r.id_obra = o.id_obra
+  //   INNER JOIN TipoTarefa t ON r.id_tipo_tarefa = t.id_tipo_tarefa
+  //   INNER JOIN Categoria cat ON r.id_categoria = cat.id_categoria
+  //   INNER JOIN Pessoa p ON r.id_nome = p.id_nome
+  //   WHERE r."timestamp" > "2025-01-01"   
+  //   ORDER BY r.timestamp DESC
+  // `;
+const registros = await prisma.registro.findMany({                  
+      select: {
+        timestamp: true,
+        duracao_minutos: true,
+        hora_extra: true,
+        
+        obra: {
+          select: {
+            nome_obra: true,
+            cod_obra: true,
+          },
+        },
+
+        tipoTarefa: {
+          select: {
+            nome_tipo: true,
+          },
+        },
+
+        categoria: {
+          select: {
+            nome_categoria: true,
+          },
+        },
+
+        pessoa: {
+          select: {
+            nome: true,
+            id_nome: true,
+            hourlyRate: true,
+          },
+        }, 
+      },
+      where: { 
+        timestamp: {
+          gte: new Date("2025-01-01"), // Data de início do filtro
+        },
+      },
+      orderBy: [
+        {
+          timestamp: "desc",
+        },
+        {
+          tipoTarefa: {
+            nome_tipo: "asc",
+          },
+        },
+      ],      
+    });
+//não é possível criar coluna 'ano_mes' diretamente no Prisma,
+//então usamos map para adicionar essa coluna após a consulta
+const registrosComAnoMes = registros.map((r) => ({
+  ...r,
+  ano_mes: new Date(r.timestamp).toISOString().slice(0, 7) // Formato 'YYYY-MM'
+}));    
+
 
   // Get unique employees
-  const funcionarios = _.uniqBy(registros, "id_nome").map(r => ({
-    id: r.id_nome,
-    nome: r.nome,
-    hourlyRate: r.hourlyRate
+  const funcionarios = _.uniqBy(registros, "pessoa.id_nome").map(r => ({
+    id: r.pessoa.id_nome,
+    nome: r.pessoa.nome,
+    hourlyRate: r.pessoa.hourlyRate
   }));
 
-  return ({ registros, funcionarios });
-  console.log("funcionarios listados:", funcionarios);
+  //console.log("funcionarios listados:", funcionarios);
+  return ({ registros: registrosComAnoMes, funcionarios });
+  
 };
 
 export default function RelatorioMensal() {
@@ -69,7 +126,7 @@ export default function RelatorioMensal() {
 
   // Extract all available years from the data
   const anosDisponiveis = _.uniq(
-    registros.map(r => new Date(r.data_hora).getFullYear().toString())
+    registros.map(r => new Date(r.timestamp).getFullYear().toString())
   ).sort().reverse();
 
   // If the current year is not in the data, default to the most recent year
@@ -79,8 +136,7 @@ export default function RelatorioMensal() {
 
   // Filter records by selected employee
   const registrosFuncionario = registros.filter(r => 
-    r.id_nome === funcionarioSelecionado && 
-    r.data_hora.startsWith(ano)
+    r.pessoa.id_nome === funcionarioSelecionado 
   );
 
   // Group data by month and sum hours
@@ -101,8 +157,8 @@ export default function RelatorioMensal() {
     registrosFuncionario.forEach(registro => {
       const monthKey = registro.ano_mes;
       if (monthsMap[monthKey]) {
-        monthsMap[monthKey].totalHours += _.round((registro.horas_trabalhadas / 60),2); // Convert minutes to hours
-        monthsMap[monthKey].totalValue += (registro.horas_trabalhadas / 60) * registro.hourlyRate;
+        monthsMap[monthKey].totalHours += _.round((registro.duracao_minutos / 60),2); // Convert minutes to hours
+        monthsMap[monthKey].totalValue += (registro.duracao_minutos / 60) * registro.pessoa.hourlyRate;
       }
     });
 

@@ -18,44 +18,124 @@ import { prisma } from "~/db.server";
 
 // Loader para buscar os registros
 export const loader = async () => {
-  const registros = await prisma.$queryRaw`
-    SELECT
-      r.id_registro,
-      o.nome_obra,
-      o.cod_obra,
-      t.nome_tipo,
-      cat.nome_categoria,
-      --p.hourlyRate,
-      p.nome,
+  // const registros = await prisma.$queryRaw`
+  //   SELECT
+  //     r.id_registro,
+  //     o.nome_obra,
+  //     o.cod_obra,
+  //     t.nome_tipo,
+  //     cat.nome_categoria,
+  //     --p.hourlyRate,
+  //     p.nome,
       
-      strftime('%d/%m/%Y %H:%M:%S', timestamp) AS data_hora,
-      r.duracao_minutos AS horas_trabalhadas,
-      r.timestamp,
-      r.hora_extra,
+  //     strftime('%d/%m/%Y %H:%M:%S', timestamp) AS data_hora,
+  //     r.duracao_minutos AS horas_trabalhadas,
+  //     r.timestamp,
+  //     r.hora_extra,
       
-      CASE strftime('%w', r.timestamp)
-        WHEN '0' THEN 'Domingo'
-        WHEN '1' THEN 'Segunda-feira'
-        WHEN '2' THEN 'Terça-feira'
-        WHEN '3' THEN 'Quarta-feira'
-        WHEN '4' THEN 'Quinta-feira'
-        WHEN '5' THEN 'Sexta-feira'
-        WHEN '6' THEN 'Sábado'
-      END AS dia_semana 
+  //     CASE strftime('%w', r.timestamp)
+  //       WHEN '0' THEN 'Domingo'
+  //       WHEN '1' THEN 'Segunda-feira'
+  //       WHEN '2' THEN 'Terça-feira'
+  //       WHEN '3' THEN 'Quarta-feira'
+  //       WHEN '4' THEN 'Quinta-feira'
+  //       WHEN '5' THEN 'Sexta-feira'
+  //       WHEN '6' THEN 'Sábado'
+  //     END AS dia_semana 
       
-    FROM Registro r
-    INNER JOIN Obra o ON r.id_obra = o.id_obra
-    INNER JOIN TipoTarefa t ON r.id_tipo_tarefa = t.id_tipo_tarefa
-    INNER JOIN Categoria cat ON r.id_categoria = cat.id_categoria
-    INNER JOIN Pessoa p ON r.id_nome = p.id_nome
-    WHERE 
-      (strftime('%w', r.timestamp) IN ('0', '6')) -- Sábado ('6') ou Domingo ('0')
-      OR (strftime('%H', r.timestamp) >= '19') -- Registros após as 19h
-    ORDER BY r.timestamp DESC, t.nome_tipo
-  `;
+  //   FROM Registro r
+  //   INNER JOIN Obra o ON r.id_obra = o.id_obra
+  //   INNER JOIN TipoTarefa t ON r.id_tipo_tarefa = t.id_tipo_tarefa
+  //   INNER JOIN Categoria cat ON r.id_categoria = cat.id_categoria
+  //   INNER JOIN Pessoa p ON r.id_nome = p.id_nome
+  //   WHERE 
+  //     (strftime('%w', r.timestamp) IN ('0', '6')) -- Sábado ('6') ou Domingo ('0')
+  //     OR (strftime('%H', r.timestamp) >= '19') -- Registros após as 19h
+  //   ORDER BY r.timestamp DESC, t.nome_tipo
+  // `;
+  const registros = await prisma.registro.findMany({
+  select: {
+    id_registro: true,
+    timestamp: true,
+    duracao_minutos: true,
+    hora_extra: true,
+    obra: {
+      select: {
+        nome_obra: true,
+        cod_obra: true
+      }
+    },
+    tipoTarefa: {
+      select: {
+        nome_tipo: true
+      }
+    },
+    categoria: {
+      select: {
+        nome_categoria: true
+      }
+    },
+    pessoa: {
+      select: {
+        nome: true
+      }
+    }
+  },
+  where: {
+    OR: [
+      { timestamp: { gte: new Date('2025-01-01') } }, // Filtro adicional, se quiser
+      {
+        AND: [
+          { timestamp: { gte: new Date('2025-01-01') } },
+          // lógica para hora >= 19h ou sábado/domingo
+        ]
+      }
+    ]
+  },
+  orderBy: [
+    { timestamp: 'desc' },
+    { tipoTarefa: { nome_tipo: 'asc' } }
+  ]
+});
 
+const registrosMapeados = registros
+  .filter((r) => {
+    const date = new Date(r.timestamp);
+    const day = date.getDay(); // 0 = domingo, 6 = sábado
+    const hour = date.getHours();
+
+    return day === 0 || day === 6 || hour >= 19; // Filtro equivalente ao strftime
+  })
+  .map((r) => {
+    const date = new Date(r.timestamp);
+    const day = date.getDay();
+    const hour = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+
+    const dia_semana = [
+      'Domingo', 'Segunda-feira', 'Terça-feira',
+      'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'
+    ][day];
+
+    return {
+      id_registro: r.id_registro,
+      nome_obra: r.obra.nome_obra,
+      cod_obra: r.obra.cod_obra,
+      nome_tipo: r.tipoTarefa.nome_tipo,
+      nome_categoria: r.categoria.nome_categoria,
+      nome: r.pessoa.nome,
+      data_hora: `${String(date.getDate()).padStart(2, '0')}/` +
+                 `${String(date.getMonth() + 1).padStart(2, '0')}/` +
+                 `${date.getFullYear()} ${hour}:${minutes}:${seconds}`,
+      horas_trabalhadas: r.duracao_minutos,
+      timestamp: r.timestamp,
+      hora_extra: r.hora_extra,
+      dia_semana: dia_semana
+    };
+  });
     
-  return json( registros);
+  return json( {registros : registrosMapeados});
 };
 
 // Ação para atualizar os registros
@@ -75,9 +155,11 @@ export const action: ActionFunction = async ({ request }) => {
 };
 
 // Componente principal
-export default function HoursPage() {    
-const registros: any = useLoaderData();
-  //console.log('Registros:', registros);
+export default function HoursPage() {
+   const data = useLoaderData();
+   const registros = data.registros;    
+   //const registros: any = useLoaderData();
+  console.log('Registros:', registros);
   const [selectedHours, setSelectedHours] = useState({}); // Mapeia os registros selecionados
 
   const handleCheckboxChange = (id) => {

@@ -45,41 +45,69 @@ import { TreeMapComponent, LevelsDirective, LevelDirective, Inject, TreeMapToolt
 //troquei o DATETIME (r.timestamp) AS data_hora, pelo strftime para o formato brasileiro
 //ver se o filtro do 'where' está funcionando. Sim, está funcionando
 export const loader = async () => {
-  const registros = await prisma.$queryRaw`
-    SELECT 
-      o.nome_obra,
-      o.cod_obra,
-      t.nome_tipo,
-	    cat.nome_categoria,
-      p.hourlyRate,
-      p.nome,
-      
-      strftime('%d/%m/%Y %H:%M:%S', timestamp) AS data_hora,
+    const registros = await prisma.registro.findMany({                  
+      select: {
+        timestamp: true,
+        duracao_minutos: true,
+        hora_extra: true,
+        
+        obra: {
+          select: {
+            nome_obra: true,
+            cod_obra: true,
+          },
+        },
 
-      r.duracao_minutos AS horas_trabalhadas 
-    FROM Registro r
-    INNER JOIN Obra o ON r.id_obra = o.id_obra
-    INNER JOIN TipoTarefa t ON r.id_tipo_tarefa = t.id_tipo_tarefa
-	  INNER JOIN Categoria cat ON r.id_categoria = cat.id_categoria
-    INNER JOIN Pessoa p ON r.id_nome = p.id_nome
-    WHERE r."timestamp" > "2025-01-01"   
-    ORDER BY r.timestamp DESC, t.nome_tipo
-  `;
+        tipoTarefa: {
+          select: {
+            nome_tipo: true,
+          },
+        },
+
+        categoria: {
+          select: {
+            nome_categoria: true,
+          },
+        },
+
+        pessoa: {
+          select: {
+            nome: true,
+          },
+        }, 
+      },
+      where: { 
+        timestamp: {
+          gte: new Date("2025-01-01"), // Data de início do filtro
+        },
+      },
+      orderBy: [
+        {
+          timestamp: "desc",
+        },
+        {
+          tipoTarefa: {
+            nome_tipo: "asc",
+          },
+        },
+      ],      
+    });
 
 
  
 
-  const groupedData = _.groupBy(registros, "nome_obra"); 
-  const nomesFuncionarios = _.uniqBy(registros, "nome").map((r) => r.nome);
+  const groupedData = _.groupBy(registros, "obra.nome_obra"); 
+  const nomesFuncionarios = _.uniqBy(registros, "pessoa.nome").map((r) => r.pessoa.nome);
 
-  return json({ registros, groupedData, nomesFuncionarios });
+  return ({ registros, groupedData, nomesFuncionarios });
 };
 
 
 
 export default function ProjetoHoras() {    
   const { registros, groupedData, nomesFuncionarios } = useLoaderData();
-  //const { registros2 } = useLoaderData();
+  //console.log("Registros:", registros);
+  
   const [funcionarioSelecionado, setFuncionarioSelecionado] = useState("");
   //const [obraSelecionada, setObraSelecionada] = useState("");
   const [obrasSelecionadas, setObrasSelecionadas] = useState<string[]>([]);
@@ -91,15 +119,18 @@ export default function ProjetoHoras() {
   // Get default date range values (for initial values)
   const getDefaultDateRange = () => {
     if (registros && registros.length > 0) {
-      const allDates = registros.map(r => new Date(r.data_hora));
-      const minDate = new Date(Math.min(...allDates));
+      const allDates = registros.map(r => new Date(r.timestamp));
+      const minDate = new Date(Math.min(...allDates));      
       const maxDate = new Date(Math.max(...allDates));
+
+      console.log(minDate.toISOString().split('T')[0]);
+      console.log(maxDate.toISOString().split('T')[0]);
       
       return {
-        // min: minDate.toISOString().split('T')[0], // Format as YYYY-MM-DD //não precisa mais porque arrumei na query
-        // max: maxDate.toISOString().split('T')[0]
-        min: minDate,
-        max: maxDate
+        min: minDate.toISOString().split('T')[0], // Format as YYYY-MM-DD //não precisa mais porque arrumei na query
+        max: maxDate.toISOString().split('T')[0]
+        // min: minDate.toDateString(),
+        // max: maxDate.toDateString()
       };
     }
     
@@ -112,81 +143,34 @@ export default function ProjetoHoras() {
 
   
 
-  // const obrasDisponiveis = funcionarioSelecionado
-  //   ? _.uniqBy(
-  //       registros.filter((r) => r.nome === funcionarioSelecionado),
-  //       "nome_obra"
-  //     ).map((r) => r.nome_obra).sort()
-  //   : _.uniqBy(registros, "nome_obra").map((r) => r.nome_obra).sort();
 
   const obrasDisponiveis = funcionarioSelecionado
   ? _.uniqBy(
-      registros.filter((r) => r.nome === funcionarioSelecionado),
-      "nome_obra"
+      registros.filter((r) => r.pessoa.nome === funcionarioSelecionado),
+      "obra.nome_obra"
     ).map((r) => ({ // Modificado para retornar um objeto com cod_obra e nome_obra
-      cod_obra: r.cod_obra,
-      nome_obra: r.nome_obra,
-      nome_concatenado: `${r.cod_obra} - ${r.nome_obra}`
+      cod_obra: r.obra.cod_obra,
+      nome_obra: r.obra.nome_obra,
+      nome_concatenado: `${r.obra.cod_obra} - ${r.obra.nome_obra}`
     })).sort((a, b) => a.nome_concatenado.localeCompare(b.nome_concatenado)) // Ordena pelo nome concatenado
-  : _.uniqBy(registros, "nome_obra").map((r) => ({ // Modificado para retornar um objeto com cod_obra e nome_obra
-      cod_obra: r.cod_obra,
-      nome_obra: r.nome_obra,
-      nome_concatenado: `${r.cod_obra} - ${r.nome_obra}`
+  : _.uniqBy(registros, "obra.nome_obra").map((r) => ({ // Modificado para retornar um objeto com cod_obra e nome_obra
+      cod_obra: r.obra.cod_obra,
+      nome_obra: r.obra.nome_obra,
+      nome_concatenado: `${r.obra.cod_obra} - ${r.obra.nome_obra}`
     })).sort((a, b) =>  a.nome_concatenado.localeCompare(b.nome_concatenado)); // Ordena pelo nome concatenado
     
-  // const dadosFiltrados = funcionarioSelecionado
-  //   ? registros.filter((registro) => registro.nome === funcionarioSelecionado)
-  //   : registros;
-  // const dadosFiltrados = registros.filter((registro) => {
-  //   if (funcionarioSelecionado && registro.nome !== funcionarioSelecionado) return false;
-  //   if (obraSelecionada && registro.nome_obra !== obraSelecionada) return false;
-  //   return true;
-  // });
-
-  // const dadosFiltrados = registros.filter((registro) => {
-  //   if (funcionarioSelecionado && registro.nome !== funcionarioSelecionado) return false;
-  //   if (obrasSelecionadas.length > 0 && !obrasSelecionadas.includes(registro.nome_obra)) return false;
-  //   return true;
-  // });
   
-  // Updated filter to include date range
-  // const dadosFiltrados = registros.filter((registro) => {
-  //   // Check employee filter
-  //   if (funcionarioSelecionado && registro.nome !== funcionarioSelecionado) return false;
-    
-  //   // Check project filter
-  //   if (obrasSelecionadas.length > 0 && !obrasSelecionadas.includes(registro.nome_obra)) return false;
-    
-  //   // Check date range filter
-  //   if (dataInicio) {
-  //     const registroDate = new Date(registro.data_hora);
-  //     const startDate = new Date(dataInicio);
-  //     // Set time to beginning of day for comparison
-  //     startDate.setHours(0, 0, 0, 0);
-  //     if (registroDate < startDate) return false;
-  //   }
-    
-  //   if (dataFim) {
-  //     const registroDate = new Date(registro.data_hora);
-  //     const endDate = new Date(dataFim);
-  //     // Set time to end of day for comparison
-  //     endDate.setHours(23, 59, 59, 999);
-  //     if (registroDate > endDate) return false;
-  //   }
-    
-  //   return true;
-  // });
   // 2. Modifique a parte do filtro por data no método filter
-const dadosFiltrados = registros.filter((registro) => {
+  const dadosFiltrados = registros.filter((registro) => {
   // Check employee filter
-  if (funcionarioSelecionado && registro.nome !== funcionarioSelecionado) return false;
+  if (funcionarioSelecionado && registro.pessoa.nome !== funcionarioSelecionado) return false;
   
   // Check project filter
-  if (obrasSelecionadas.length > 0 && !obrasSelecionadas.includes(registro.nome_obra)) return false;
+  if (obrasSelecionadas.length > 0 && !obrasSelecionadas.includes(registro.obra.nome_obra)) return false;
   
   // Check date range filter
   if (dataInicio) {
-    const registroDate = new Date(registro.data_hora);
+    const registroDate = new Date(registro.timestamp);
     
     // Cria a data de início considerando o fuso horário local
     const [yearStart, monthStart, dayStart] = dataInicio.split('-');
@@ -197,7 +181,7 @@ const dadosFiltrados = registros.filter((registro) => {
   }
   
   if (dataFim) {
-    const registroDate = new Date(registro.data_hora);
+    const registroDate = new Date(registro.timestamp);
     
     // Cria a data final considerando o fuso horário local
     const [yearEnd, monthEnd, dayEnd] = dataFim.split('-');
@@ -211,44 +195,40 @@ const dadosFiltrados = registros.filter((registro) => {
 });
   
 
-  const totalObras = _.uniqBy(dadosFiltrados, "nome_obra").length;
+  const totalObras = _.uniqBy(dadosFiltrados, "obra.nome_obra").length;
   const projetoMaisTrabalhado = _.maxBy(
-    Object.entries(_.groupBy(dadosFiltrados, "nome_obra")).map(([obra, registros]) => ({
+    Object.entries(_.groupBy(dadosFiltrados, "obra.nome_obra")).map(([obra, registros]) => ({
       obra,
-      horas_totais: _.sumBy(registros, "horas_trabalhadas") / 60,
+      horas_totais: _.sumBy(registros, "duracao_minutos") / 60,
     })),
     "horas_totais"
   );
   const tipoMaisExecutado = _.maxBy(
     _.map(
-      _.groupBy(dadosFiltrados, "nome_tipo"),
+      _.groupBy(dadosFiltrados, "tipoTarefa.nome_tipo"),
       (tarefas, tipo) => ({ tipo, count: tarefas.length })
     ),
     "count"
   );
+  
 
-  // const chartData = Object.entries(_.groupBy(dadosFiltrados, "nome_obra")).map(([obra, registros]) => ({
-  //   nome_obra: obra,
-  //   horas_totais: _.sumBy(registros, "horas_trabalhadas") / 60,      
-  // }));
-
-  const obrasData = Object.entries(_.groupBy(dadosFiltrados, "nome_obra")).map(([obra, registros]) => ({
+  const obrasData = Object.entries(_.groupBy(dadosFiltrados, "obra.nome_obra")).map(([obra, registros]) => ({
     nome_obra: obra,
-    horas_totais: _.sumBy(registros, "horas_trabalhadas") / 60,
+    horas_totais: _.sumBy(registros, "duracao_minutos") / 60,
   }));
   
   const totalGeralData = [
     {
       nome_obra: "Total Geral",
-      horas_totais: _.sumBy(dadosFiltrados, "horas_trabalhadas") / 60,
+      horas_totais: _.sumBy(dadosFiltrados, "duracao_minutos") / 60,
     },
   ];
 
   const tipoTarefaData = (() => {
-    const data = Object.entries(_.groupBy(dadosFiltrados, "nome_tipo"))
+    const data = Object.entries(_.groupBy(dadosFiltrados, "tipoTarefa.nome_tipo"))
       .map(([tipo, registros]) => ({
         tipo,
-        horas: _.round((_.sumBy(registros, "horas_trabalhadas") / 60), 2),
+        horas: _.round((_.sumBy(registros, "duracao_minutos") / 60), 2),
       }));
       
     const totalHoras = _.sumBy(data, "horas");
@@ -259,39 +239,17 @@ const dadosFiltrados = registros.filter((registro) => {
     }));
   })();
   
-// Mapear os dados para o formato esperado pelo TreeMap, mas sem somar os valores
-  // const treeMapData = dadosFiltrados.map((registro) => ({
-    // categoria: registro.nome_categoria,
-    // valor: registro.horas_trabalhadas,
-  // }));
-  // console.log(treeMapData)
   
-  const treeMapData = Object.entries(_.groupBy(dadosFiltrados, "nome_categoria"))
+  const treeMapData = Object.entries(_.groupBy(dadosFiltrados, "categoria.nome_categoria"))
   .map(([categoria, registros]) => ({
     categoria,
-    valor: _.round((_.sumBy(registros, "horas_trabalhadas") / 60), 2), // Soma das horas por categoria
+    valor: _.round((_.sumBy(registros, "duracao_minutos") / 60), 2), // Soma das horas por categoria
   }));
-  //console.log(treeMapData)
-  
-//   const onChartLoad = (args: IAccLoadedEventArgs): void => {
-//     document.getElementById('pie-chart').setAttribute('title', '');
-// };
-// const load = (args: IAccLoadedEventArgs): void => {
-//     let selectedTheme: string = location.hash.split('/')[1];
-//     selectedTheme = selectedTheme ? selectedTheme : 'Fluent2';
-//     args.accumulation.theme = (selectedTheme.charAt(0).toUpperCase() + selectedTheme.slice(1)).replace(/-dark/i, "Dark").replace(/light/i, "Light").replace(/contrast/i,'Contrast').replace(/-highContrast/i, 'HighContrast') as AccumulationTheme;
-// };
-
 
 
   const selectionSettings : SelectionSettingsModel= { mode: 'Row', type: 'Single' };
 
-  // Helper function to format date for display
-  // const formatDateForDisplay = (dateString) => {
-  //   if (!dateString) return '';
-  //   const date = new Date(dateString);
-  //   return date.toLocaleDateString();
-  // };
+
   const formatDateForDisplay = (dateString) => {
     if (!dateString) return '';
     
@@ -315,7 +273,9 @@ const dadosFiltrados = registros.filter((registro) => {
     setDataFim("");
   };
 
-  // const shipFormat: object = { type: 'dateTime', format: 'MM/dd/yyyy hh:mm:ss a' }; //não precisa mais porque arrumei na query
+  // Format for the GridComponent
+  //HH = 24 hours, hh = 12 hours
+  const shipFormat: object = { type: 'dateTime', format: 'dd/MM/yy HH:mm:ss' }; //não precisa mais porque arrumei na query
 
 
   return (
@@ -453,10 +413,11 @@ const dadosFiltrados = registros.filter((registro) => {
           >
             <ColumnsDirective>
               {/* <ColumnDirective field="nome" headerText="Funcionário" width="150" /> */}
-              <ColumnDirective field="data_hora" headerText="Data" width="180" />
-              <ColumnDirective field="cod_obra" headerText="Obra" width="80" />
-              <ColumnDirective field="nome_obra" headerText="Projeto" width="180" />
-              <ColumnDirective field="nome_tipo" headerText="Tipo de Tarefa" width="250" />
+              <ColumnDirective field="timestamp" headerText="Data" width="180" format={shipFormat}/>
+              <ColumnDirective field="obra.cod_obra" headerText="Obra" width="80" />
+              <ColumnDirective field="obra.nome_obra" headerText="Projeto" width="180" />
+              <ColumnDirective field="tipoTarefa.nome_tipo" headerText="Tipo de Tarefa" width="200" />
+              <ColumnDirective field="hora_extra" headerText="Hora Extra" width="50" />
               {/* <ColumnDirective field="horas_trabalhadas" headerText="Horas Trabalhadas" width="150" textAlign="Right" /> */}
             </ColumnsDirective>
             <Inject services={[Page, Toolbar, Selection, Sort]} />
@@ -544,16 +505,16 @@ const dadosFiltrados = registros.filter((registro) => {
 		<TreeMapComponent
         dataSource={treeMapData}
         weightValuePath='valor'
-		equalColorValuePath='categoria'
-		//palette= {['red','green', 'blue', 'orange', 'white']} //assim deu certo; com colormapping fica tudo preto
+		    equalColorValuePath='categoria'
+		    //palette= {['red','green', 'blue', 'orange', 'white']} //assim deu certo; com colormapping fica tudo preto
         leafItemSettings={{
           labelPath: 'categoria',
-		  colorMapping: [
-          {            value: 'Conferência',            color: '#D3D3B3'          },
-          {            value: 'Execução',            color: '#A9A9F9'          },
-		  {            value: 'Orçamento',            color: '#8080C0'          },
-		  {            value: 'Planejamento',            color: '#B34D6D'          },
-		  {            value: 'Revisão',            color: '#B34D31'          },		  
+		      colorMapping: [
+          {value: 'Conferência',  color: '#D3D3B3'},
+          {value: 'Execução',     color: '#A9A9F9'},
+		      {value: 'Orçamento',    color: '#8080C0'},
+		      {value: 'Planejamento', color: '#B34D6D'},
+		      {value: 'Revisão',      color: '#B34D31'},		  
         ],		
 				  
         }}
