@@ -101,8 +101,8 @@ export async function loader() {
   const tasksWithId = tasks.map((task: any) => ({
     TaskID: task.id,
     taskName: task.taskName,
-    StartDate: new Date(task.startDate), 
-    EndDate: new Date(task.endDate), 
+    StartDate: new Date(task.startDate).toISOString().split('T')[0], //conferir o formato de data requerido pelo Gantt
+    EndDate: new Date(task.endDate).toISOString().split('T')[0], 
     Duration: task.duration,
     Progress: task.progress,
     parentId: task.parentId, //? String(task.parentId) : null,
@@ -126,8 +126,8 @@ export async function loader() {
     Id: evento.id,
     Subject: evento.titulo,
     Description: evento.descricao,
-    StartTime: new Date(evento.data_hora_inicial),
-    EndTime: new Date(evento.data_hora_final),
+    StartTime: new Date(evento.data_hora_inicio),
+    EndTime: new Date(evento.data_hora_termino),
     IsAllDay: evento.dia_inteiro,        
     ObraId: evento.id_obra,  // campo personalizado para o código da obra
     entregue: evento.entregue,        
@@ -208,6 +208,9 @@ function agruparHorasPorRecurso(tasks: any[], resources: any[]) {
 export default function GanttRoute() {  
   const ganttRef = useRef<GanttComponent>(null);  
   const {tasks, resources, eventos, x} = useLoaderData<typeof loader>();
+  console.log("tasks:", tasks);
+  //console.log("resources:", resources);
+  //console.log("eventos:", eventos);
   const [isLoading, setIsLoading] = useState(false); // Estado para controle do spinner
   const [showPasteModal, setShowPasteModal] = useState(false); // Estado para controlar o modal
   const [pasteData, setPasteData] = useState(''); // Estado para armazenar os dados colados  

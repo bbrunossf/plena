@@ -46,6 +46,7 @@ model Pessoa {
   funcao       String?
   email        String?
   hourlyRate   Float?     @default(10.0)
+  overtimeRate Float?
   data_criacao DateTime   @default(now())
   ativo        Boolean    @default(true)
   registros    Registro[]

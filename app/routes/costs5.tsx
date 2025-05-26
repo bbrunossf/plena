@@ -52,6 +52,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
           select: {
             nome: true,
             hourlyRate: true,
+            overtimeRate: true,
           },
         }, 
       },
@@ -75,7 +76,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   };
 
 export default function Costs() {
-    const { registros } = useLoaderData<typeof loader>();
+    const { registros } = useLoaderData<typeof loader>();    
     const [viewType, setViewType] = useState<'obra' | 'tipo' | 'pessoa'>('obra');
     const [aggregatedData, setAggregatedData] = useState<any[]>([]);
   
@@ -85,15 +86,40 @@ export default function Costs() {
           case 'obra':
             return _.chain(registros)
               .groupBy('obra.nome_obra')
-              .map((group, key) => ({
-                categoria: key,
-                codigo: group[0].obra.cod_obra,
-                total_horas: _.sumBy(group, r => r.duracao_minutos / 60),
-                custo_total: _.sumBy(group, r => r.duracao_minutos / 60 * r.pessoa.hourlyRate),
-                pessoas_envolvidas: _.uniqBy(group, 'pessoa.nome').length,
-                tipos_tarefa: _.uniqBy(group, 'tipoTarefa.nome_tipo').length,
-                custo_medio_hora: _.meanBy(group, r => r.pessoa.hourlyRate)
-              }))                          
+              .map((group, key) => {
+                // Separar registros normais e extras
+                const horasNormais = group.filter(r => !r.hora_extra);
+                const horasExtras = group.filter(r => r.hora_extra);
+                
+                // Calcular horas
+                const totalHorasNormais = _.sumBy(horasNormais, r => r.duracao_minutos / 60);
+                const totalHorasExtras = _.sumBy(horasExtras, r => r.duracao_minutos / 60);
+                
+                // Calcular custos
+                const custoNormal = _.sumBy(horasNormais, r => 
+                  (r.duracao_minutos / 60) * r.pessoa.hourlyRate
+                );
+                const custoExtra = _.sumBy(horasExtras, r => 
+                  (r.duracao_minutos / 60) * (r.pessoa.overtimeRate || r.pessoa.hourlyRate)
+                );
+                
+                return {
+                  categoria: key,
+                  codigo: group[0].obra.cod_obra,
+                  total_horas: totalHorasNormais + totalHorasExtras,
+                  horas_normais: totalHorasNormais,
+                  horas_extras: totalHorasExtras,
+                  custo_total: custoNormal + custoExtra,
+                  custo_normal: custoNormal,
+                  custo_extra: custoExtra,
+                  pessoas_envolvidas: _.uniqBy(group, 'pessoa.nome').length,
+                  tipos_tarefa: _.uniqBy(group, 'tipoTarefa.nome_tipo').length,
+                  // NOVO: Arrays com os nomes únicos (para os tooltips)
+                  nomes_pessoas: _.uniq(_.map(group, 'pessoa.nome')),
+                  nomes_tipos_tarefa: _.uniq(_.map(group, 'tipoTarefa.nome_tipo')),
+                  custo_medio_hora: _.meanBy(group, r => r.pessoa.hourlyRate)
+                };
+              })                          
               .orderBy(['nome_obra', 'custo_total'], ['asc', 'desc'])
               .value();
   
@@ -106,6 +132,9 @@ export default function Costs() {
                 custo_total: _.sumBy(group, r => r.duracao_minutos / 60 * r.pessoa.hourlyRate),
                 obras_relacionadas: _.uniqBy(group, 'obra.nome_obra').length,
                 pessoas_envolvidas: _.uniqBy(group, 'pessoa.nome').length,
+                // NOVO: Arrays com os nomes únicos
+                nomes_pessoas: _.uniq(_.map(group, 'pessoa.nome')),
+                nomes_tipos_tarefa: _.uniq(_.map(group, 'tipoTarefa.nome_tipo')),
                 custo_medio_hora: _.meanBy(group, r => r.pessoa.hourlyRate)
               }))
               .orderBy(['total_horas'], ['desc'])
@@ -137,7 +166,7 @@ export default function Costs() {
       ];
   
       const specificHeaders = {
-        obra: ['Código', 'Pessoas Envolvidas', 'Tipos de Tarefa', 'Custo Médio/Hora'],
+        obra: ['Código', 'Horas Normais', 'Horas Extras', 'Custo Normal', 'Custo Extra', 'Pessoas Envolvidas', 'Tipos de Tarefa', 'Custo Médio/Hora'],
         tipo: ['Obras Relacionadas', 'Pessoas Envolvidas', 'Custo Médio/Hora'],
         pessoa: ['Valor/Hora', 'Obras Envolvidas', 'Tipos Realizados']
       };
@@ -148,14 +177,55 @@ export default function Costs() {
     const renderTableCell = (item: any, header: string) => {
       switch (header) {
         case 'Total Horas':
-          return Number(item.total_horas).toFixed(2);
+        case 'Horas Normais':
+        case 'Horas Extras':
+          const hours = header === 'Total Horas' ? item.total_horas :
+                      header === 'Horas Normais' ? item.horas_normais :
+                      item.horas_extras;
+          return Number(hours || 0).toFixed(2);
+          
         case 'Custo Total':
+        case 'Custo Normal': 
+        case 'Custo Extra':
         case 'Valor/Hora':
         case 'Custo Médio/Hora':
-          return Number(header === 'Custo Total' ? item.custo_total : 
-                       header === 'Valor/Hora' ? item.valor_hora : 
-                       item.custo_medio_hora)
-            .toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+          const value = header === 'Custo Total' ? item.custo_total :
+                      header === 'Custo Normal' ? item.custo_normal :
+                      header === 'Custo Extra' ? item.custo_extra :
+                      header === 'Valor/Hora' ? item.valor_hora : 
+                      item.custo_medio_hora;
+          return Number(value || 0).toLocaleString('pt-BR', { 
+            style: 'currency', 
+            currency: 'BRL' 
+          });
+        // Mapeamento específico para cada campo
+        case 'Código':
+          return item.codigo;
+        case 'Pessoas Envolvidas':
+          //return item.pessoas_envolvidas;
+          // Opção C: Mostrar quantidade + tooltip com nomes
+          return (
+            <span 
+              title={item.nomes_pessoas?.join('\n• ') ? `• ${item.nomes_pessoas.join('\n• ')}` : ''} 
+              className="tooltip-cell"
+              style={{ 
+                cursor: 'help', 
+                textDecoration: 'underline dotted',
+                color: '#0066cc',
+                fontWeight: 'bold'
+              }}
+            >
+              {item.pessoas_envolvidas}
+            </span>
+          );
+        case 'Tipos de Tarefa':
+          return item.tipos_tarefa;
+        case 'Obras Relacionadas':
+          return item.obras_relacionadas;
+        case 'Tipos Realizados':
+          return item.tipos_realizados;
+        case 'Obras Envolvidas':
+          return item.obras_envolvidas;
         default:
           return item[_.camelCase(header.toLowerCase())];
       }

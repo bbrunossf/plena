@@ -62,22 +62,23 @@ export async function getUsedResources() {
 //   }
 
 export async function getEvents() {
-  // return await prisma.agenda.findMany({
-  //   orderBy: { id: "asc" },  // Garante a ordenação
-  // });
-  return await prisma.$queryRaw`       
-        SELECT 
-        id, 
-        titulo,
-        descricao,
-        strftime('%m-%d-%Y', data_hora_inicio) AS data_hora_inicial,
-        strftime('%m-%d-%Y', data_hora_termino) AS data_hora_final,
-        dia_inteiro,
-        id_obra,
-        entregue,
-        entregue em        
-        FROM Agenda         
-        `
+  return await prisma.agenda.findMany({
+    orderBy: { id: "asc" },  // Garante a ordenação
+  });
+  // return await prisma.$queryRaw`       
+  //       SELECT 
+  //       id, 
+  //       titulo,
+  //       descricao,
+  //       strftime('%m-%d-%Y', data_hora_inicio) AS data_hora_inicial,
+  //       strftime('%m-%d-%Y', data_hora_termino) AS data_hora_final,
+  //       dia_inteiro,
+  //       id_obra,
+  //       entregue,
+  //       entregue em        
+  //       FROM Agenda         
+  //       `
+  
 }
 
 
