@@ -1,3 +1,6 @@
+//resolvido o errdo com gricomponent (não vou usar mais a syncfusion nessa rota)
+//agora tem que rever a lógica dos estados das checkboxes e a função action para atualizar os registros no banco de dados
+
 import { json, LoaderFunction, ActionFunction } from '@remix-run/node';
 import { useMemo } from 'react';
 import { useEffect } from 'react';
@@ -5,18 +8,21 @@ import _ from "lodash";
 import { Form } from "@remix-run/react";
 import { useLoaderData } from 'react-router-dom';
 import { useState } from 'react';
-import { GridComponent, 
-  ColumnDirective,
-  ColumnsDirective,   
-  Inject,
-  Page,
-  Toolbar,  
-  SelectionSettingsModel,
-  Selection,
-  SelectionMode,
-  Sort  
-   } from '@syncfusion/ej2-react-grids';
-import { CheckBoxComponent } from '@syncfusion/ej2-react-buttons';
+// import { GridComponent, 
+//   ColumnDirective,
+//   ColumnsDirective,   
+//   Inject,
+//   Page,
+//   Toolbar,  
+//   SelectionSettingsModel,
+//   Selection,
+//   SelectionMode,
+//   Sort  
+//    } from '@syncfusion/ej2-react-grids';
+// import { CheckBoxComponent } from '@syncfusion/ej2-react-buttons';
+import DataGrid from 'react-data-grid';
+import 'react-data-grid/lib/styles.css';
+
 import { prisma } from "~/db.server";
 
 // Lista de feriados (adicione/remova conforme necessário)
@@ -190,6 +196,7 @@ export default function HoursPage() {
 
   const [selectedHours, setSelectedHours] = useState({}); // Mapeia os registros selecionados
   const [selectedEmployee, setSelectedEmployee] = useState(''); // Estado para o funcionário selecionado  
+  
 
   
 
@@ -199,15 +206,26 @@ export default function HoursPage() {
   //     [id]: !prev[id], // Alterna o estado do checkbox
   //   }));
   // };
+
+  // const handleCheckboxChange = (id) => {
+  //   setSelectedHours((prev) => {
+  //     const novoEstado = !prev[id]; // Inverte o estado atual
+  //     //console.log(`Registro ID: ${id}, Hora Extra: ${novoEstado ? 'marcado' : 'desmarcado'}`); // Adiciona o console.log, no cliente
+  //     return {
+  //       ...prev,
+  //       [id]: novoEstado, // Alterna o estado do checkbox
+  //     };
+  //   });
+  // };
+
   const handleCheckboxChange = (id) => {
-    setSelectedHours((prev) => {
-      const novoEstado = !prev[id]; // Inverte o estado atual
-      //console.log(`Registro ID: ${id}, Hora Extra: ${novoEstado ? 'marcado' : 'desmarcado'}`); // Adiciona o console.log, no cliente
-      return {
-        ...prev,
-        [id]: novoEstado, // Alterna o estado do checkbox
-      };
-    });
+    setRegistrosLocais((prev) =>
+      prev.map((registro) =>
+        registro.id_registro === id
+          ? { ...registro, hora_extra: !registro.hora_extra }
+          : registro
+      )
+    );
   };
 
   const handleUpdate = async () => {
@@ -219,32 +237,32 @@ export default function HoursPage() {
     console.log('Atualizando registros:', updates);
   };
 
-  const checkboxTemplate = (props) => {
-    const registroId = props.id_registro;
-    return (
-      // <CheckBoxComponent 
-      //   checked={selectedHours[registroId] || props.hora_extra || false}
-      //   onChange={() => handleCheckboxChange(registroId)}
-      // />
-      <input
-      type="checkbox"
-      checked={selectedHours[registroId] || props.hora_extra || false}
-      onChange={() => handleCheckboxChange(registroId)}
-    />
-    );
-  };
+  // const checkboxTemplate = (props) => {
+  //   const registroId = props.id_registro;
+  //   return (
+  //     // <CheckBoxComponent 
+  //     //   checked={selectedHours[registroId] || props.hora_extra || false}
+  //     //   onChange={() => handleCheckboxChange(registroId)}
+  //     // />
+  //     <input
+  //     type="checkbox"
+  //     checked={selectedHours[registroId] || false}
+  //     onChange={() => handleCheckboxChange(registroId)}
+  //   />
+  //   );
+  // };
 
   // Template personalizado para a coluna dia_semana com hover
-const diaSemanaTemplate = (props) => {
-  if (props.ehFeriado) {
-    return (
-      <span title={`Feriado: ${props.nomeFeriado}`}>
-        {props.dia_semana}
-      </span>
-    );
-  }
-  return <span>{props.dia_semana}</span>;
-};
+// const diaSemanaTemplate = (props) => {
+//   if (props.ehFeriado) {
+//     return (
+//       <span title={`Feriado: ${props.nomeFeriado}`}>
+//         {props.dia_semana}
+//       </span>
+//     );
+//   }
+//   return <span>{props.dia_semana}</span>;
+// };
 
 //   <ColumnDirective field='timestamp' headerText='Data e Hora' width='200' textAlign='Center' />
 //           <ColumnDirective 
@@ -268,15 +286,79 @@ const registrosFiltrados = useMemo(() => {
     : registros;
 }, [selectedEmployee, registros]);
 
+const [registrosLocais, setRegistrosLocais] = useState(registrosFiltrados);
+
+// useEffect(() => {
+//   const estadoInicial = {};
+//   registrosFiltrados.forEach(r => {
+//     estadoInicial[r.id_registro] = r.hora_extra;
+//   });
+//   setSelectedHours(estadoInicial);
+// }, [selectedEmployee, registrosFiltrados]);
+
+// FIXED: useEffect to properly reset selectedHours when employee changes
+// useEffect(() => {
+//   const estadoInicial = {};
+//   registrosFiltrados.forEach(r => {
+//     estadoInicial[r.id_registro] = r.hora_extra;
+//   });
+//   setSelectedHours(estadoInicial); // This will completely replace the previous state
+// }, [registrosFiltrados]); // Changed dependency to registrosFiltrados instead of selectedEmployee
+
 useEffect(() => {
-  const estadoInicial = {};
-  registrosFiltrados.forEach(r => {
-    estadoInicial[r.id_registro] = r.hora_extra;
-  });
-  setSelectedHours(estadoInicial);
-}, [selectedEmployee, registrosFiltrados]);
+  setRegistrosLocais(registrosFiltrados);
+}, [registrosFiltrados]);
 
+// Define columns for React Data Grid
+const columns = [
+  { key: 'nome_obra', name: 'Obra', width: 200 },
+  { key: 'cod_obra', name: 'Código da Obra', width: 120 },
+  { key: 'nome_tipo', name: 'Tipo de Tarefa', width: 200 },
+  { key: 'nome_categoria', name: 'Categoria', width: 120 },
+  { key: 'timestamp', name: 'Data e Hora', width: 200 },
+  { key: 'nome', name: 'Nome', width: 150 },
+  { key: 'horas_trabalhadas', name: 'Minutos', width: 100 },
+  { 
+    key: 'dia_semana', 
+    name: 'Dia da Semana', 
+    width: 200,
+    renderCell: ({ row }) => (
+      <span title={row.ehFeriado ? `Feriado: ${row.nomeFeriado}` : ''}>
+        {row.dia_semana}
+      </span>
+    )
+  },
+  // {
+  //   key: 'hora_extra',
+  //   name: 'Hora Extra',
+  //   width: 100,
+  //   renderCell: ({ row }) => (
+  //     <input
+  //       type="checkbox"
+  //       //checked={selectedHours[row.id_registro]}        
+  //       //onChange={() => handleCheckboxChange(row.id_registro)}
+  //       checked={row.hora_extra}
+  //       onChange={() => handleCheckboxChange(row.id_registro)}
+  //       className="mx-auto"
+  //     />
+  //   )
+  // }
 
+  //formatter é o padrão correto para customizar exibição de células no react-data-grid, pelo menos nessa versão (7.0.0-beta.27)
+  {
+    key: 'hora_extra',
+    name: 'Hora Extra',
+    width: 100,
+    formatter: ({ row }) => (
+      <input
+        type="checkbox"
+        checked={row.hora_extra}
+        onChange={() => handleCheckboxChange(row.id_registro)}
+        className="mx-auto"
+      />
+    )
+  }
+];
 
 return (
   <div>
@@ -306,11 +388,16 @@ return (
         </select>
       </div>
       
+       {/* 
       <GridComponent       
         dataSource={registrosFiltrados} 
         allowPaging={true} 
         allowSorting={true}
         enableVirtualization={true} // ✅ Ativa virtualização
+        key={selectedEmployee} // FIXED: Add key to force GridComponent re-render when employee changes
+        pageSettings={{ pageSize: 10 }}
+        allowFiltering={true}
+
       >
         <ColumnsDirective>        
           <ColumnDirective field='nome_obra' headerText='Obra' width='200' textAlign='Center' />
@@ -331,6 +418,22 @@ return (
         </ColumnsDirective>
         <Inject services={[Page, Toolbar, Selection, Sort]} />
       </GridComponent>
+      */}
+
+      {/* React Data Grid - Much simpler! */}
+      <div className="mb-4" style={{ height: '600px' }}>
+          <DataGrid
+            columns={columns}
+            //rows={registrosFiltrados}
+            rows={registrosLocais}
+            rowKeyGetter={(row) => row.id_registro}
+            className="rdg-light" // or "rdg-dark" for dark theme
+            defaultColumnOptions={{
+              sortable: true,
+              resizable: true
+            }}
+          />
+        </div>
       
       <button type="submit" className="btn btn-primary mt-3 bg-red-400">
         Marcar como Hora Extra
