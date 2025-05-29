@@ -8,18 +8,7 @@ import _ from "lodash";
 import { Form } from "@remix-run/react";
 import { useLoaderData } from 'react-router-dom';
 import { useState } from 'react';
-// import { GridComponent, 
-//   ColumnDirective,
-//   ColumnsDirective,   
-//   Inject,
-//   Page,
-//   Toolbar,  
-//   SelectionSettingsModel,
-//   Selection,
-//   SelectionMode,
-//   Sort  
-//    } from '@syncfusion/ej2-react-grids';
-// import { CheckBoxComponent } from '@syncfusion/ej2-react-buttons';
+
 import DataGrid from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
 
@@ -148,24 +137,12 @@ const registrosMapeados = registros
   return json({ registros : registrosMapeados, nomesUnicos});
 };
 
-// Ação para atualizar os registros
-// export const action: ActionFunction = async ({ request }) => {
-//   const formData = await request.formData();
-//   const selectedIds = formData.getAll('selectedIds');
-  
-//   // Atualizar os registros selecionados no banco de dados
-//   for (const id of selectedIds) {
-//     await prisma.registro.update({
-//       where: { id_registro: parseInt(id.toString()) },
-//       data: { hora_extra: true }
-//     });
-//   }
 
-//   return json({ success: true });
-// };
 export const action: ActionFunction = async ({ request }) => {
   const formData = await request.formData();
   const selectedIds = formData.getAll('selectedIds');
+
+  console.log("selectedIds:", selectedIds);
   
   // Consultar os registros atuais para verificar o estado de hora_extra
   const registrosAtuais = await prisma.registro.findMany({
@@ -186,97 +163,41 @@ export const action: ActionFunction = async ({ request }) => {
 };
 
 // Componente principal
+// parece que é executado a cada interação do usuário com as checkboxes;é o comportamento normal do React.
 export default function HoursPage() {
    const data = useLoaderData();
    //const registros = data.registros;   
    const { registros, nomesUnicos } = data; // Desestruturando os dados 
    //const registros: any = useLoaderData();
-  console.log('Registros:', registros[0]);
-  console.log('Nomes Únicos:', nomesUnicos);
+  
+   //console.log('Registros:', registros[0]);
+  //console.log('Nomes Únicos:', nomesUnicos);
 
-  const [selectedHours, setSelectedHours] = useState({}); // Mapeia os registros selecionados
+  //const [selectedHours, setSelectedHours] = useState({}); // Mapeia os registros selecionados
   const [selectedEmployee, setSelectedEmployee] = useState(''); // Estado para o funcionário selecionado  
-  
-
-  
-
-  // const handleCheckboxChange = (id) => {
-  //   setSelectedHours((prev) => ({
-  //     ...prev,
-  //     [id]: !prev[id], // Alterna o estado do checkbox
-  //   }));
-  // };
-
-  // const handleCheckboxChange = (id) => {
-  //   setSelectedHours((prev) => {
-  //     const novoEstado = !prev[id]; // Inverte o estado atual
-  //     //console.log(`Registro ID: ${id}, Hora Extra: ${novoEstado ? 'marcado' : 'desmarcado'}`); // Adiciona o console.log, no cliente
-  //     return {
-  //       ...prev,
-  //       [id]: novoEstado, // Alterna o estado do checkbox
-  //     };
-  //   });
-  // };
-
-  const handleCheckboxChange = (id) => {
-    setRegistrosLocais((prev) =>
-      prev.map((registro) =>
-        registro.id_registro === id
-          ? { ...registro, hora_extra: !registro.hora_extra }
-          : registro
-      )
-    );
-  };
-
-  const handleUpdate = async () => {
-    const updates = Object.keys(selectedHours).filter(key => selectedHours[key]);
     
-    // Crie a lógica para enviar os dados selecionados para a ação de atualização
-    // Exemplo: fetch('/hours', { method: 'POST', body: JSON.stringify(updates) });
-
-    console.log('Atualizando registros:', updates);
-  };
-
-  // const checkboxTemplate = (props) => {
-  //   const registroId = props.id_registro;
-  //   return (
-  //     // <CheckBoxComponent 
-  //     //   checked={selectedHours[registroId] || props.hora_extra || false}
-  //     //   onChange={() => handleCheckboxChange(registroId)}
-  //     // />
-  //     <input
-  //     type="checkbox"
-  //     checked={selectedHours[registroId] || false}
-  //     onChange={() => handleCheckboxChange(registroId)}
-  //   />
+  // const handleCheckboxChange = (id) => {
+  //   setRegistrosLocais((prev) =>
+  //     prev.map((registro) =>
+  //       registro.id_registro === id
+  //         ? { ...registro, hora_extra: !registro.hora_extra }
+  //         : registro
+  //     )
   //   );
   // };
 
-  // Template personalizado para a coluna dia_semana com hover
-// const diaSemanaTemplate = (props) => {
-//   if (props.ehFeriado) {
-//     return (
-//       <span title={`Feriado: ${props.nomeFeriado}`}>
-//         {props.dia_semana}
-//       </span>
-//     );
-//   }
-//   return <span>{props.dia_semana}</span>;
-// };
-
-//   <ColumnDirective field='timestamp' headerText='Data e Hora' width='200' textAlign='Center' />
-//           <ColumnDirective 
-//             field='id' 
-//             headerText='Hora Extra' 
-//             width='100' 
-//             template={checkboxTemplate} 
-//             textAlign='Center' 
-//           />
-
-// Format for the GridComponent
-//HH = 24 hours, hh = 12 hours
-const shipFormat: object = { type: 'dateTime', format: 'dd/MM/yy HH:mm:ss' }; //não precisa mais porque arrumei na query
-
+  const handleCheckboxChange = (id) => {
+    setChangedIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id); // Remove se já estava marcado como alterado
+      } else {
+        newSet.add(id); // Adiciona se não estava
+      }
+      return newSet;
+    });
+  };
+  
 
 // Filtra os registros pelo nome do funcionário selecionado
 // Se não houver funcionário selecionado, retorna todos os registros
@@ -286,28 +207,15 @@ const registrosFiltrados = useMemo(() => {
     : registros;
 }, [selectedEmployee, registros]);
 
-const [registrosLocais, setRegistrosLocais] = useState(registrosFiltrados);
+//const [registrosLocais, setRegistrosLocais] = useState(registrosFiltrados);
 
 // useEffect(() => {
-//   const estadoInicial = {};
-//   registrosFiltrados.forEach(r => {
-//     estadoInicial[r.id_registro] = r.hora_extra;
-//   });
-//   setSelectedHours(estadoInicial);
-// }, [selectedEmployee, registrosFiltrados]);
+//   setRegistrosLocais(registrosFiltrados);
+// }, [registrosFiltrados]);
 
-// FIXED: useEffect to properly reset selectedHours when employee changes
-// useEffect(() => {
-//   const estadoInicial = {};
-//   registrosFiltrados.forEach(r => {
-//     estadoInicial[r.id_registro] = r.hora_extra;
-//   });
-//   setSelectedHours(estadoInicial); // This will completely replace the previous state
-// }, [registrosFiltrados]); // Changed dependency to registrosFiltrados instead of selectedEmployee
+// Substitua por apenas um estado para mudanças:
+const [changedIds, setChangedIds] = useState(new Set());
 
-useEffect(() => {
-  setRegistrosLocais(registrosFiltrados);
-}, [registrosFiltrados]);
 
 // Define columns for React Data Grid
 const columns = [
@@ -327,32 +235,19 @@ const columns = [
         {row.dia_semana}
       </span>
     )
-  },
-  // {
-  //   key: 'hora_extra',
-  //   name: 'Hora Extra',
-  //   width: 100,
-  //   renderCell: ({ row }) => (
-  //     <input
-  //       type="checkbox"
-  //       //checked={selectedHours[row.id_registro]}        
-  //       //onChange={() => handleCheckboxChange(row.id_registro)}
-  //       checked={row.hora_extra}
-  //       onChange={() => handleCheckboxChange(row.id_registro)}
-  //       className="mx-auto"
-  //     />
-  //   )
-  // }
+  }, 
 
   //formatter é o padrão correto para customizar exibição de células no react-data-grid, pelo menos nessa versão (7.0.0-beta.27)
   {
     key: 'hora_extra',
     name: 'Hora Extra',
     width: 100,
-    formatter: ({ row }) => (
+    formatter: ({ row }) => (    
       <input
         type="checkbox"
-        checked={row.hora_extra}
+        // checked={row.hora_extra}
+        // onChange={() => handleCheckboxChange(row.id_registro)}
+        checked={changedIds.has(row.id_registro) ? !row.hora_extra : row.hora_extra}
         onChange={() => handleCheckboxChange(row.id_registro)}
         className="mx-auto"
       />
@@ -360,13 +255,17 @@ const columns = [
   }
 ];
 
+// {Object.keys(selectedHours).filter(id => selectedHours[id]).map(id => (
+//   <input key={id} type="hidden" name="selectedIds" value={id} />
+// ))}
+
 return (
   <div>
     <h1>Registro de Horas</h1>
     <Form method="post">
-      {Object.keys(selectedHours).filter(id => selectedHours[id]).map(id => (
-        <input key={id} type="hidden" name="selectedIds" value={id} />
-      ))}
+      {Array.from(changedIds).map(id => (
+      <input key={id} type="hidden" name="selectedIds" value={id} />
+    ))}      
       
       {/* Menu Dropdown para seleção de funcionário */}
       <div className="mb-4">
@@ -386,46 +285,14 @@ return (
             </option>
           ))}
         </select>
-      </div>
-      
-       {/* 
-      <GridComponent       
-        dataSource={registrosFiltrados} 
-        allowPaging={true} 
-        allowSorting={true}
-        enableVirtualization={true} // ✅ Ativa virtualização
-        key={selectedEmployee} // FIXED: Add key to force GridComponent re-render when employee changes
-        pageSettings={{ pageSize: 10 }}
-        allowFiltering={true}
-
-      >
-        <ColumnsDirective>        
-          <ColumnDirective field='nome_obra' headerText='Obra' width='200' textAlign='Center' />
-          <ColumnDirective field='cod_obra' headerText='Código da Obra' width='100' textAlign='Center' />
-          <ColumnDirective field='nome_tipo' headerText='Tipo de Tarefa' width='200' textAlign='Left' />
-          <ColumnDirective field='nome_categoria' headerText='Categoria' width='100' textAlign='Left' />
-          <ColumnDirective field='timestamp' headerText='Data e Hora' width='200' textAlign='Center' />
-          <ColumnDirective field='nome' headerText='Nome' width='150' textAlign='Center' />
-          <ColumnDirective field='horas_trabalhadas' headerText='Minutos' width='100' textAlign='Center' />
-          <ColumnDirective field='dia_semana' headerText='Dia da Semana' width='200' textAlign='Left' />
-          <ColumnDirective 
-            field='id_registro' 
-            headerText='Hora Extra' 
-            width='100' 
-            template={checkboxTemplate} 
-            textAlign='Center' 
-          />
-        </ColumnsDirective>
-        <Inject services={[Page, Toolbar, Selection, Sort]} />
-      </GridComponent>
-      */}
+      </div>       
 
       {/* React Data Grid - Much simpler! */}
-      <div className="mb-4" style={{ height: '600px' }}>
+      <div className="mb-4" style={{ height: '900px' }}>
           <DataGrid
             columns={columns}
-            //rows={registrosFiltrados}
-            rows={registrosLocais}
+            rows={registrosFiltrados}
+            //rows={registrosLocais}
             rowKeyGetter={(row) => row.id_registro}
             className="rdg-light" // or "rdg-dark" for dark theme
             defaultColumnOptions={{
