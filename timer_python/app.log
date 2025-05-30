@@ -1,0 +1,12 @@
+2025-05-30 15:56:57,232 - INFO - Tentativa de conexão 1 de 3
+2025-05-30 15:56:57,232 - INFO - Tentando inicializar DatabaseManager com schema: dev
+2025-05-30 15:56:57,232 - INFO - Tentando conectar ao banco de dados PostgreSQL...
+2025-05-30 15:57:06,338 - INFO - Conexão PostgreSQL estabelecida com sucesso
+2025-05-30 15:57:06,338 - INFO - Cursor criado com sucesso
+2025-05-30 15:57:06,338 - INFO - Definindo search_path para schema: dev
+2025-05-30 15:57:06,341 - INFO - Search path definido e commitado com sucesso
+2025-05-30 15:57:06,341 - INFO - Search path definido com sucesso
+2025-05-30 15:57:06,341 - INFO - DatabaseManager inicializado com sucesso
+2025-05-30 15:57:06,341 - INFO - cursor deu certo
+2025-05-30 15:57:06,345 - INFO - Conectado ao banco de dados com sucesso.
+2025-05-30 15:57:06,346 - INFO - Conexão ao banco de dados estabelecida com sucesso.
