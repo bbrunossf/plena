@@ -1,4 +1,4 @@
-//Para incluir o campo custo de hora extra, é necessário adicionar o campo no banco de dados e no Prisma.
+//Editar, agora que saiu as colunas de custo
 
 import { Form, useLoaderData } from "@remix-run/react";
 import { prisma } from "~/db.server";
@@ -9,7 +9,7 @@ import { requireAdmin } from "~/auth.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
     // Add admin check
-    await requireAdmin(request);
+    //await requireAdmin(request); //agora que os valores de custo estão na tabela custoHora, não precisamos mais da autenticação
     
     const pessoas = await prisma.pessoa.findMany({
       select: {
@@ -17,8 +17,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         nome: true,
         funcao: true,
         email: true,
-        hourlyRate: true,
-        overtimeRate: true,  // Adicionar campo de hora extra
+        // hourlyRate: true,
+        // overtimeRate: true,  // Adicionar campo de hora extra
         ativo: true,
       },
       orderBy: {
@@ -40,8 +40,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
           nome: formData.get("nome") as string,
           funcao: formData.get("funcao") as string,
           email: formData.get("email") as string,
-          hourlyRate: parseFloat(formData.get("hourlyRate") as string),
-          overtimeRate: formData.get("overtimeRate") ? parseFloat(formData.get("overtimeRate") as string) : null,  // Adicionar campo
+          // hourlyRate: parseFloat(formData.get("hourlyRate") as string),
+          // overtimeRate: formData.get("overtimeRate") ? parseFloat(formData.get("overtimeRate") as string) : null,  // Adicionar campo
           data_criacao: new Date(),
           ativo: formData.get("ativo") === "true",
         },
@@ -55,8 +55,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
           nome: formData.get("nome") as string,
           funcao: formData.get("funcao") as string,
           email: formData.get("email") as string,
-          hourlyRate: parseFloat(formData.get("hourlyRate") as string),
-          overtimeRate: formData.get("overtimeRate") ? parseFloat(formData.get("overtimeRate") as string) : null,  // Adicionar campo
+          // hourlyRate: parseFloat(formData.get("hourlyRate") as string),
+          // overtimeRate: formData.get("overtimeRate") ? parseFloat(formData.get("overtimeRate") as string) : null,  // Adicionar campo
           ativo: formData.get("ativo") === "true",
         },
       });
@@ -109,7 +109,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
               />
             </div>
   
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium mb-1">Taxa Horária Normal</label>
               <input
                 type="number"
@@ -133,7 +133,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
                 defaultValue={editingPessoa?.overtimeRate || ""}
                 placeholder="Opcional - deixe vazio se não aplicável"
               />
-            </div>
+            </div> */}
              
   
             <div className="col-span-2 flex gap-2">
@@ -163,8 +163,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
               <tr className="bg-gray-100">                
                 <th className="px-4 py-2">Nome</th>
                 <th className="px-4 py-2">Função</th>
-                <th className="px-4 py-2">Taxa Horária</th>
-                <th className="px-4 py-2">Taxa Hora Extra</th>
+                {/* <th className="px-4 py-2">Taxa Horária</th>
+                <th className="px-4 py-2">Taxa Hora Extra</th> */}
                 <th className="px-4 py-2">Ações</th>                
               </tr>
             </thead>
@@ -173,7 +173,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
                 <tr key={pessoa.id_nome} className="border-t">                  
                   <td className="px-4 py-2">{pessoa.nome}</td>
                   <td className="px-4 py-2">{pessoa.funcao}</td>
-                  <td className="px-4 py-2">
+                  {/* <td className="px-4 py-2">
                     {pessoa.hourlyRate ? 
                       Number(pessoa.hourlyRate).toLocaleString('pt-BR', { 
                         style: 'currency', 
@@ -188,7 +188,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
                         currency: 'BRL' 
                       }) : '-'
                     }
-                  </td>
+                  </td> */}
                   <td className="px-4 py-2">
                   <button
                       onClick={() => setEditingPessoa(pessoa)}

@@ -6,6 +6,7 @@ export default function Sidebar() {
   const links = [
     { to: '/', label: 'Home' },
     { to: '/pessoas', label: 'Funcionários' },        
+    { to: '/custoHora', label: 'Cadastro de Valores' },        
     { to: '/obras', label: 'Obras' },    
     { to: '/costs5', label: 'Custos' },    ,
     { to: '/registros', label: 'Registros' },

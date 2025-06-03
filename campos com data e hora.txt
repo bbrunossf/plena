@@ -1,0 +1,79 @@
+funções do cronograma
+
+filtro por pessoa
+formatação diferente para tarefas pai e filhos
+cor diferente por recurso
+ordenação livre
+
+Erro/problema: ao inserir uma nova tarefa, o ID da tarefa é o length + 1, e não o último id + 1.
+
+
++++++
+dragidMapping (origem)
+dropidMapping (destino)
+
+Se origem > destino:
+	//calcula o intervalo das tarefas que devem ser renumeradas
+	range_order = destino até (origem - 1)
+	
+	//move a tarefa arrastada para posição de destino
+	
+	//renumera as tarefas afetadas
+	para cada valor em range_order:
+		atualiza o campo 'order', acrescentando 1 unidade, a partir do valor de 'order' da primeira tarefa da lista
+		
+
+Se destino > origem:
+	//calcula o intervalo das tarefas que devem ser renumeradas
+	range_order = (origem + 1) até (destino - 1)
+	
+	//move a tarefa arrastada para a posição de destino
+	
+	//renumera as tarefas afetadas
+	para cada valor em range_order:
+		atualiza o campo 'order', retirando 1 unidade, a partir do valor de 'order' da primeira tarefa da lista
+
++++++
+
+
+====
+SITUAÇÃO DOS CAMPOS DE DATA E HORA, E COMO RESOLVER
+MELHORIAS DO CRONOGRAMA:
+
+	**FIXAR AS TAREFAS EM OUTRA ORDEM (ADICIONAR CAMPO DE ORDEM)
+	**DAR CORES ÀS TAREFAS EM FUNÇÃO DOS RECURSOS ASSOCIADOS
+VER AS TAREFAS DE DURAÇÃO ZERO NA AGENDA
+	**HABILITAR O SALVAMENTO DOS DADOS NA MEMÓRIA DO BROWSER
+	**FAZER OS RELATORIOS DE USO DOS RECURSOS
+	**FILTRAR O GANTT SELECIONANDO OS RECURSOS NA LISTA (AEEEE)
+
+**MELHORIAS NO CRONOGRAMA
+
+	MUDAR ESTILO DO TEXTO PARA TAREFAS FILHA
+	PROIBIR ARRASTAR DIRETO PARA FILHA
+SE TAREFA VIRAR PAI, RETIRAR OS RECURSOS E ATRIBUI ESSES RECURSOS ÀS TAREFAS FILHAS	
+
++++++++++++++++++++
+TODOS OS CAMPOS QUE TEM DATA NO BANCO DE DADOS
+
+REGISTRO
+	timestamp (datetime) 2024-12-16 08:34:41
+
+AGENDA
+	data_hora_inicio (datetime) 2025-09-24 03:00:00
+	data_hora_termino (datetime) 2025-09-25 03:00:00
+	criadoEm (datetime) 2025-01-30 12:36:39
+	atualizadoEm (datetime) 2025-09-24 03:00:00
+	entregue_em (datetime) 1.740.142.990.211 / 2025-02-21 13:04:36.058Z
+	
+OBRA
+	data_inicio (datetime) 1709262000000
+	data_inicio_planejamento (datetime) 1706745600000
+	data_fim_planejamento (datetime) 1706745600000
+	**resolvi deixando os dados em milissegundos, campo tipo 'datetime, usando o findMany sem alterações e inserindo as datas com new Date(data.data_inicio).toISOString()**
+	
+TASK
+	startDate (datetime) 1.743.766.959.792
+	endDate (datetime) 1.744.112.559.792
+	
+====

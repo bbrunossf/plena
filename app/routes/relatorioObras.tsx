@@ -69,8 +69,7 @@ export const loader = async () => {
         pessoa: {
           select: {
             nome: true,
-            id_nome: true,
-            hourlyRate: true,
+            id_nome: true,            
           },
         }, 
       },

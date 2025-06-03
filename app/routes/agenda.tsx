@@ -30,19 +30,20 @@ import { Prisma } from '@prisma/client';
 
 export const loader = async () => {  
     try {
-        const db_eventos = await prisma.$queryRaw`       
-        SELECT 
-        id, 
-        titulo,
-        descricao,
-        strftime('%m-%d-%Y', data_hora_inicio) AS data_hora_inicial,
-        strftime('%m-%d-%Y', data_hora_termino) AS data_hora_final,
-        dia_inteiro,
-        id_obra,
-        entregue,
-        entregue_em        
-        FROM Agenda         
-        `
+        // const db_eventos = await prisma.$queryRaw`       
+        // SELECT 
+        // id, 
+        // titulo,
+        // descricao,
+        // strftime('%m-%d-%Y', data_hora_inicio) AS data_hora_inicial,
+        // strftime('%m-%d-%Y', data_hora_termino) AS data_hora_final,
+        // dia_inteiro,
+        // id_obra,
+        // entregue,
+        // entregue_em        
+        // FROM Agenda         
+        // `
+        const db_eventos = await prisma.agenda.findMany();
 
       console.log("Eventos na query do banco de dados:", db_eventos);
 
@@ -62,13 +63,14 @@ export const loader = async () => {
 
       console.log("Eventos no banco de dados:", eventos);
 
-      const db_obras = await prisma.$queryRaw`       
-        SELECT 
-        id_obra, 
-        cod_obra,
-        nome_obra        
-        FROM Obra
-        `
+      // const db_obras = await prisma.$queryRaw`       
+      //   SELECT 
+      //   id_obra, 
+      //   cod_obra,
+      //   nome_obra        
+      //   FROM Obra
+      //   `
+      const db_obras = await prisma.obra.findMany();
 
       return eventos //{db_obras}               
     } catch (error) {

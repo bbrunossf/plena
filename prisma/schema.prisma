@@ -41,15 +41,26 @@ model Obra {
 }
 
 model Pessoa {
-  id_nome      Int        @id() @default(autoincrement())
+  id_nome      Int         @id() @default(autoincrement())
   nome         String
   funcao       String?
   email        String?
-  hourlyRate   Float?     @default(10.0)
-  overtimeRate Float?
-  data_criacao DateTime   @default(now())
-  ativo        Boolean    @default(true)
+  custos       CustoHora[]
+  data_criacao DateTime    @default(now())
+  ativo        Boolean     @default(true)
   registros    Registro[]
+}
+
+model CustoHora {
+  id             Int       @id() @default(autoincrement())
+  pessoaId       Int
+  custoHora      Decimal
+  custoHoraExtra Decimal
+  inicioVigencia DateTime
+  fimVigencia    DateTime?
+  pessoa         Pessoa    @relation(fields: [pessoaId], references: [id_nome])
+
+  @@index([pessoaId, inicioVigencia, fimVigencia])
 }
 
 model Registro {

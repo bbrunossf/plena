@@ -76,8 +76,7 @@ const registros = await prisma.registro.findMany({
         pessoa: {
           select: {
             nome: true,
-            id_nome: true,
-            hourlyRate: true,
+            id_nome: true,            
           },
         }, 
       },
@@ -108,8 +107,7 @@ const registrosComAnoMes = registros.map((r) => ({
   // Get unique employees
   const funcionarios = _.uniqBy(registros, "pessoa.id_nome").map(r => ({
     id: r.pessoa.id_nome,
-    nome: r.pessoa.nome,
-    hourlyRate: r.pessoa.hourlyRate
+    nome: r.pessoa.nome    
   }));
 
   //console.log("funcionarios listados:", funcionarios);
@@ -158,7 +156,7 @@ export default function RelatorioMensal() {
       const monthKey = registro.ano_mes;
       if (monthsMap[monthKey]) {
         monthsMap[monthKey].totalHours += _.round((registro.duracao_minutos / 60),2); // Convert minutes to hours
-        monthsMap[monthKey].totalValue += (registro.duracao_minutos / 60) * registro.pessoa.hourlyRate;
+        monthsMap[monthKey].totalValue += (registro.duracao_minutos / 60) * 1; //antes estava multiplicando por hourlyRate
       }
     });
 
@@ -176,7 +174,7 @@ export default function RelatorioMensal() {
     : { monthName: 'N/A', totalHours: 0 };
 
   // Get selected employee name and rate
-  const funcionarioAtual = funcionarios.find(f => f.id === funcionarioSelecionado) || { nome: '', hourlyRate: 0 };
+  const funcionarioAtual = funcionarios.find(f => f.id === funcionarioSelecionado) || { nome: ''};
 
   // Format currency values
   const formatCurrency = (value) => {
