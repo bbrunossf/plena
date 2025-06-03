@@ -54,8 +54,8 @@ model Pessoa {
 model CustoHora {
   id             Int       @id() @default(autoincrement())
   pessoaId       Int
-  custoHora      Decimal
-  custoHoraExtra Decimal
+  custoHora      Float
+  custoHoraExtra Float
   inicioVigencia DateTime
   fimVigencia    DateTime?
   pessoa         Pessoa    @relation(fields: [pessoaId], references: [id_nome])

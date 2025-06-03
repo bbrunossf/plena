@@ -116,6 +116,10 @@ export default function Costs() {
     // Função corrigida para obter a taxa de uma pessoa em uma data específica
     // Função corrigida para obter a taxa de uma pessoa em uma data específica
     const obterTaxaPorData = (custosPersona: any[], dataRegistro: string, isHoraExtra: boolean = false) => {
+      console.log("=== DEBUG obterTaxaPorData ===");
+      console.log("custosPersona recebido:", custosPersona);
+      console.log("dataRegistro recebido:", dataRegistro);
+      console.log("isHoraExtra:", isHoraExtra);
 
       //custosPersona vem com o array de custos da pessoa: [{custoHora: 10, custoHoraExtra: 15, inicioVigencia: '2023-01-01', fimVigencia: '2023-12-31'},...]
 
@@ -125,11 +129,20 @@ export default function Costs() {
       //const dataRegistroString = dataRegistro.toISOString().split('T')[0];
       //const dataRegistroString = dataRegistro;
       const dataDateRegistro = new Date(dataRegistro);
+      console.log("dataDateRegistro convertida:", dataDateRegistro);
       
       // Encontrar a taxa válida para a data (ordenada por inicioVigencia desc)
       const taxaValida = custosPersona.find(custo => {
+        console.log("Analisando custo:", custo);
+        console.log("custo.inicioVigencia:", custo.inicioVigencia);
+        console.log("custo.custoHora:", custo.custoHora, "tipo:", typeof custo.custoHora);
+        console.log("custo.custoHoraExtra:", custo.custoHoraExtra, "tipo:", typeof custo.custoHoraExtra);
+        
           //const inicioString = new Date(custo.inicioVigencia).toISOString().split('T')[0];
           const inicioDate = new Date(custo.inicioVigencia);
+          console.log("inicioDate:", inicioDate);
+          console.log("Comparação dataDateRegistro >= inicioDate:", dataDateRegistro >= inicioDate);
+
           const fimString = custo.fimVigencia
             ? new Date(custo.fimVigencia)
             : '9999-12-31'; 
@@ -140,13 +153,22 @@ export default function Costs() {
           return dataDateRegistro >= inicioDate; // && dataDateRegistro <= fimString; //ok, retorna true ou false
       });
 
+      console.log("taxaValida encontrada:", taxaValida);
+
       if (!taxaValida) {
           console.warn(`Taxa não encontrada para a pessoa na data ${dataDateRegistro.toISOString()}`);
           return { valor: 0, taxaInfo: null };
       }
 
-      const valor = isHoraExtra ? (taxaValida.custoHoraExtra) : (taxaValida.custoHora);
+      // const valor = isHoraExtra ? (taxaValida.custoHoraExtra) : (taxaValida.custoHora);
+      
+      // CORREÇÃO: Usar .toNumber() para converter Prisma.Decimal
+      const valor = isHoraExtra 
+        ? taxaValida.custoHoraExtra
+        : taxaValida.custoHora;
       console.log("+++++ valor", valor);
+      
+
       
       // Retornar tanto o valor quanto informações da taxa para debug/identificação
       return { 
