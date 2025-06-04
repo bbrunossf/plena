@@ -56,15 +56,45 @@ export async function getClientes() {
   return await prisma.cliente.findMany();
 }
 
+// export async function createObra(
+//     cod_obra: string,
+//     nome_obra: string,
+//     id_cliente: number,
+//     data_inicio: string,
+//     total_horas_planejadas: number,
+//     observacoes_planejamento: string
+//   ) {
+//     return await prisma.obra.create({
+//       data: {
+//         cod_obra,
+//         nome_obra,
+//         id_cliente,
+//         data_inicio,
+//         total_horas_planejadas,
+//         observacoes_planejamento,
+//       },
+//     });
+//   }
+
 export async function createObra(
-    cod_obra: string,
-    nome_obra: string,
-    id_cliente: number,
-    data_inicio: string,
-    total_horas_planejadas: number,
-    observacoes_planejamento: string
-  ) {
-    return await prisma.obra.create({
+  cod_obra: string,
+  nome_obra: string,
+  id_cliente: number,
+  data_inicio: string,
+  total_horas_planejadas: number,
+  observacoes_planejamento: string
+) {
+  console.log("createObra - Parâmetros recebidos:", {
+    cod_obra,
+    nome_obra,
+    id_cliente,
+    data_inicio,
+    total_horas_planejadas,
+    observacoes_planejamento,
+  });
+  
+  try {
+    const resultado = await prisma.obra.create({
       data: {
         cod_obra,
         nome_obra,
@@ -74,7 +104,14 @@ export async function createObra(
         observacoes_planejamento,
       },
     });
+    
+    console.log("createObra - Obra criada com sucesso:", resultado);
+    return resultado;
+  } catch (error) {
+    console.error("createObra - Erro ao criar obra:", error);
+    throw error;
   }
+}
 
   export async function updateObra(id_obra: number, data: {
     cod_obra: string;

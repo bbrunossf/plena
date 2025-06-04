@@ -273,57 +273,124 @@ export default function Costs() {
               .orderBy(['nome_obra', 'custo_total'], ['asc', 'desc'])
               .value();
   
+          // case 'tipo':
+          //   return _.chain(registros)
+          //     .groupBy('tipoTarefa.nome_tipo')
+          //     .map((group, key) => {
+          //       // Para tipo, cada registro pode ser de uma pessoa diferente
+          //       const custoTotal = group.reduce((total, registro) => {
+          //         const dataRegistro = new Date(registro.timestamp);
+          //         const resultado = obterTaxaPorData(
+          //           registro.pessoa.custos, // Cada registro tem seus próprios custos
+          //           dataRegistro, 
+          //           registro.hora_extra
+          //         );
+          //         return total + (registro.duracao_minutos / 60) * resultado.valor;
+          //       }, 0);
+          
+          //       return {
+          //         categoria: key,
+          //         total_horas: _.sumBy(group, r => r.duracao_minutos / 60),
+          //         custo_total: custoTotal,
+          //         obras_relacionadas: _.uniqBy(group, 'obra.nome_obra').length,
+          //         pessoas_envolvidas: _.uniqBy(group, 'pessoa.nome').length,
+          //         nomes_pessoas: _.uniq(_.map(group, 'pessoa.nome')),
+          //         nomes_obras: _.uniq(_.map(group, 'obra.nome_obra')),
+          //         custo_medio_hora: custoTotal / _.sumBy(group, r => r.duracao_minutos / 60)
+          //       };
+          //     })
+          //     .orderBy(['total_horas'], ['desc'])
+          //     .value();
           case 'tipo':
             return _.chain(registros)
               .groupBy('tipoTarefa.nome_tipo')
               .map((group, key) => {
-                // Para tipo, cada registro pode ser de uma pessoa diferente
-                const custoTotal = group.reduce((total, registro) => {
-                  const dataRegistro = new Date(registro.timestamp);
-                  const resultado = obterTaxaPorData(
-                    registro.pessoa.custos, // Cada registro tem seus próprios custos
-                    dataRegistro, 
-                    registro.hora_extra
-                  );
-                  return total + (registro.duracao_minutos / 60) * resultado.valor;
-                }, 0);
-          
+                // Separar registros normais e extras
+                const horasNormais = group.filter(r => !r.hora_extra);
+                const horasExtras = group.filter(r => r.hora_extra);
+                
+                // Calcular horas
+                const totalHorasNormais = _.sumBy(horasNormais, r => r.duracao_minutos / 60);
+                const totalHorasExtras = _.sumBy(horasExtras, r => r.duracao_minutos / 60);
+                
+                // Calcular custos usando a função padronizada
+                const custoNormal = calcularCustoComTaxaCorreta(horasNormais);
+                const custoExtra = calcularCustoComTaxaCorreta(horasExtras);
+                
                 return {
                   categoria: key,
-                  total_horas: _.sumBy(group, r => r.duracao_minutos / 60),
-                  custo_total: custoTotal,
+                  total_horas: totalHorasNormais + totalHorasExtras,
+                  horas_normais: totalHorasNormais,
+                  horas_extras: totalHorasExtras,
+                  custo_total: custoNormal + custoExtra,
+                  custo_normal: custoNormal,
+                  custo_extra: custoExtra,
                   obras_relacionadas: _.uniqBy(group, 'obra.nome_obra').length,
                   pessoas_envolvidas: _.uniqBy(group, 'pessoa.nome').length,
                   nomes_pessoas: _.uniq(_.map(group, 'pessoa.nome')),
                   nomes_obras: _.uniq(_.map(group, 'obra.nome_obra')),
-                  custo_medio_hora: custoTotal / _.sumBy(group, r => r.duracao_minutos / 60)
+                  custo_medio_hora: (custoNormal + custoExtra) / (totalHorasNormais + totalHorasExtras)
                 };
               })
               .orderBy(['total_horas'], ['desc'])
               .value();
   
+          // case 'pessoa':
+          //   return _.chain(registros)
+          //     .groupBy('pessoa.nome')
+          //     .map((group, nomePessoa) => {
+          //       // Todos os registros neste group são da mesma pessoa
+          //       const custosPersona = group[0].pessoa.custos; // custos desta pessoa específica
+                
+          //       const custoTotal = group.reduce((total, registro) => {
+          //         const dataRegistro = new Date(registro.timestamp);
+          //         const taxa = obterTaxaPorData(custosPersona, dataRegistro, registro.hora_extra);
+          //         console.log("++++Valor da taxa:", taxa);
+          //         return total + (registro.duracao_minutos / 60) * taxa.valor;
+          //       }, 0);
+                
+          //       return {
+          //         categoria: nomePessoa,
+          //         total_horas: _.sumBy(group, r => r.duracao_minutos / 60),
+          //         custo_total: custoTotal,
+          //         obras_envolvidas: _.uniqBy(group, 'obra.nome_obra').length,
+          //         tipos_realizados: _.uniqBy(group, 'tipoTarefa.nome_tipo').length,
+          //         // Valor/hora médio ponderado no período
+          //         valor_hora_medio: custoTotal / _.sumBy(group, r => r.duracao_minutos / 60)
+          //       };
+          //     })
+          //     .orderBy(['custo_total'], ['desc'])
+          //     .value();
           case 'pessoa':
             return _.chain(registros)
               .groupBy('pessoa.nome')
               .map((group, nomePessoa) => {
-                // Todos os registros neste group são da mesma pessoa
-                const custosPersona = group[0].pessoa.custos; // custos desta pessoa específica
+                // Separar registros normais e extras
+                const horasNormais = group.filter(r => !r.hora_extra);
+                const horasExtras = group.filter(r => r.hora_extra);
                 
-                const custoTotal = group.reduce((total, registro) => {
-                  const dataRegistro = new Date(registro.timestamp);
-                  const taxa = obterTaxaPorData(custosPersona, dataRegistro, registro.hora_extra);
-                  console.log("++++Valor da taxa:", taxa);
-                  return total + (registro.duracao_minutos / 60) * taxa.valor;
-                }, 0);
+                // Calcular horas
+                const totalHorasNormais = _.sumBy(horasNormais, r => r.duracao_minutos / 60);
+                const totalHorasExtras = _.sumBy(horasExtras, r => r.duracao_minutos / 60);
+                
+                // Calcular custos usando a função padronizada
+                const custoNormal = calcularCustoComTaxaCorreta(horasNormais);
+                const custoExtra = calcularCustoComTaxaCorreta(horasExtras);
                 
                 return {
                   categoria: nomePessoa,
-                  total_horas: _.sumBy(group, r => r.duracao_minutos / 60),
-                  custo_total: custoTotal,
+                  total_horas: totalHorasNormais + totalHorasExtras,
+                  horas_normais: totalHorasNormais,
+                  horas_extras: totalHorasExtras,
+                  custo_total: custoNormal + custoExtra,
+                  custo_normal: custoNormal,
+                  custo_extra: custoExtra,
                   obras_envolvidas: _.uniqBy(group, 'obra.nome_obra').length,
                   tipos_realizados: _.uniqBy(group, 'tipoTarefa.nome_tipo').length,
+                  nomes_obras: _.uniq(_.map(group, 'obra.nome_obra')),
+                  nomes_tipos: _.uniq(_.map(group, 'tipoTarefa.nome_tipo')),
                   // Valor/hora médio ponderado no período
-                  valor_hora_medio: custoTotal / _.sumBy(group, r => r.duracao_minutos / 60)
+                  valor_hora_medio: (custoNormal + custoExtra) / (totalHorasNormais + totalHorasExtras)
                 };
               })
               .orderBy(['custo_total'], ['desc'])
@@ -367,7 +434,7 @@ export default function Costs() {
           const value = header === 'Custo Total' ? item.custo_total :
                       header === 'Custo Normal' ? item.custo_normal :
                       header === 'Custo Extra' ? item.custo_extra :
-                      header === 'Valor/Hora' ? item.valor_hora : 
+                      header === 'Valor/Hora' ? item.valor_hora_medio : 
                       item.custo_medio_hora;
           return Number(value || 0).toLocaleString('pt-BR', { 
             style: 'currency', 

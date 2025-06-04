@@ -14,19 +14,25 @@ import 'react-data-grid/lib/styles.css';
 
 import { prisma } from "~/db.server";
 
-// Lista de feriados (adicione/remova conforme necessário)
+// Lista de feriados
 const feriados = [
   { data: '2025-01-01', nome: 'Confraternização Universal' },
-  { data: '2025-02-17', nome: 'Carnaval' },
-  { data: '2025-02-18', nome: 'Carnaval' },
+  { data: '2025-03-03', nome: 'Carnaval' },
+  { data: '2025-03-04', nome: 'Carnaval' },
+  { data: '2025-03-05', nome: 'Quarta-feira de Cinzas' },
   { data: '2025-04-18', nome: 'Sexta-feira Santa' },
   { data: '2025-04-21', nome: 'Tiradentes' },
+  //28-04 foi dia normal de trabalho; dia 29-04 foi feriado (trocamos)
+  { data: '2025-04-29', nome: 'N. S. da Penha' },  
   { data: '2025-05-01', nome: 'Dia do Trabalhador' },
+  { data: '2025-06-19', nome: 'Corpus Christi' },
   { data: '2025-09-07', nome: 'Independência do Brasil' },
   { data: '2025-10-12', nome: 'Nossa Senhora Aparecida' },
   { data: '2025-11-02', nome: 'Finados' },
   { data: '2025-11-15', nome: 'Proclamação da República' },
+  { data: '2025-11-20', nome: 'Consciencia Negra' },
   { data: '2025-12-25', nome: 'Natal' }
+
 ];
 
 // Função para verificar se uma data é feriado
@@ -81,6 +87,7 @@ export const loader = async () => {
     ]
   },
   orderBy: [
+    { hora_extra: 'desc' },
     { timestamp: 'asc' },
     { tipoTarefa: { nome_tipo: 'asc' } }
   ]
@@ -219,17 +226,17 @@ const [changedIds, setChangedIds] = useState(new Set());
 
 // Define columns for React Data Grid
 const columns = [
-  { key: 'nome_obra', name: 'Obra', width: 200 },
+  { key: 'nome_obra', name: 'Obra', width: 250 },
   { key: 'cod_obra', name: 'Código da Obra', width: 120 },
-  { key: 'nome_tipo', name: 'Tipo de Tarefa', width: 200 },
+  { key: 'nome_tipo', name: 'Tipo de Tarefa', width: 250 },
   { key: 'nome_categoria', name: 'Categoria', width: 120 },
   { key: 'timestamp', name: 'Data e Hora', width: 200 },
   { key: 'nome', name: 'Nome', width: 150 },
-  { key: 'horas_trabalhadas', name: 'Minutos', width: 100 },
+  { key: 'horas_trabalhadas', name: 'Minutos', width: 80 },
   { 
     key: 'dia_semana', 
     name: 'Dia da Semana', 
-    width: 200,
+    width: 250,
     renderCell: ({ row }) => (
       <span title={row.ehFeriado ? `Feriado: ${row.nomeFeriado}` : ''}>
         {row.dia_semana}
@@ -289,7 +296,7 @@ return (
 
       {/* React Data Grid - Much simpler! */}
       <div className="mb-4" style={{ height: '900px' }}>
-          <DataGrid
+          <DataGrid            
             columns={columns}
             rows={registrosFiltrados}
             //rows={registrosLocais}

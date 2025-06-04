@@ -14,13 +14,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   try {
     // Criar
     if (method === "POST") {
+      console.log("Dados brutos recebidos:", data);  
+      // Remove id_obra dos dados para criação (será gerado automaticamente)
+      const { id_obra, ...dadosParaCriacao } = data;  
+      console.log("Dados após remover id_obra:", dadosParaCriacao);
+  
       const resultado = await createObra(
-        data.cod_obra,
-        data.nome_obra,
-        data.id_cliente,
-        new Date(data.data_inicio).toISOString(),
-        data.total_horas_planejadas,
-        data.observacoes_planejamento
+        dadosParaCriacao.cod_obra,
+        dadosParaCriacao.nome_obra,
+        dadosParaCriacao.id_cliente,
+        new Date(dadosParaCriacao.data_inicio).toISOString(),
+        dadosParaCriacao.total_horas_planejadas,
+        dadosParaCriacao.observacoes_planejamento
       );
       return json({ success: true, data: resultado });
     }

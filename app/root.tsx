@@ -147,8 +147,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Meta />
         <Links />
       </head>
-      <body className="bg-gray-100 overflow-x-hidden"> {/* //overflow-x-hidden para não ter scroll horizontal */}
-        <div className="flex h-screen">
+      <body className="bg-gray-100 overflow-x-hidden border-8 border-yellow-500"> {/* //overflow-x-hidden para não ter scroll horizontal */}      
+        <div className="flex">
           <Sidebar />
           {/* <main className="ml-64 flex-1 p-8"> */}
           <main className="ml-64 flex-1 overflow-auto p-8">
