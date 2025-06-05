@@ -1,5 +1,5 @@
 """
-Segunda versão com banco de dados postgres.
+Segunda versão com banco de dados postgres, agora com o pg8000 ao invés do psycopg2 ou 3.
 Mudança na sintaxe de conexão ao banco de dados (linha 291)
 """
 
