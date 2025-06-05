@@ -3,7 +3,7 @@
 - instalar o compilador com o VS build
 - executar o nuitka (deixar ele baixar o que for necessário)
 	sintaxe completa:
-	nuitka --standalone --onefile --enable-plugin=tk-inter --windows-disable-console --windows-icon-from-ico=meu_icone.ico rev12d.py
+	nuitka --standalone --onefile --enable-plugin=tk-inter --windows-console-mode=disable --windows-icon-from-ico=icone.ico rev12d.py
 
 standalone: cria versão auto-dependente, sem precisar de pacotes externos
 onefile: cria um único arquivo executável
