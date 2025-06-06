@@ -11,3 +11,6 @@ windows-disable-console: oculta a tela de console
 windows-icon-from-ico: adiciona um ícone .ico ao executável
 
 - assinar o executável
+
+## LEMBRAR DE MUDAR O SCHEMA ANTES DE COMPILAR
+### LEMBRAR DE MUDAR A VERSÃO ANTES DE COMPILAR

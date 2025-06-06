@@ -62,7 +62,7 @@ class AboutDialog:
         
         tk.Label(
             self.dialog,
-            text="Versão 12",
+            text="Versão 12d (postgres)",
             font=("Arial", 10)
         ).pack()
         
@@ -272,7 +272,7 @@ class DailyEntriesWindow:
 
 
 class DatabaseManager:
-    def __init__(self, schema='dev'):
+    def __init__(self, schema='public'):
         self.schema = schema
         self.conn = None
         self.cursor = None
@@ -782,7 +782,7 @@ class CountdownTimer:
             #print(f"Tentativa de conexão {attempt} de {max_attempts}")
             logging.info(f"Tentativa de conexão {attempt} de {max_attempts}")
             try:
-                db_manager = DatabaseManager(schema='dev')
+                db_manager = DatabaseManager(schema='public')
                 if self.check_database_connection(db_manager):
                     #print("Conectado ao banco de dados com sucesso.")
                     logging.info("Conectado ao banco de dados com sucesso.")

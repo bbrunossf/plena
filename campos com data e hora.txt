@@ -77,3 +77,26 @@ TASK
 	endDate (datetime) 1.744.112.559.792
 	
 ====
+
+
+================ ATUALIZAÇÃO DA SITUAÇAO DOS CAMPOS DE DATA NO BANCO DE DADOS NOVO POSTGRES
+*** EM 06/06/25
+AGENDA - timestamp
+	recebe como? agenda.findMany; mapeia e cria novo objeto Date
+	lê como? no Action, tem uma função para decompor ano, mes, dia de uma data no formato YYYY-mm-dd;
+e cria uma data formatada, e depois usa .toISOString().split("T")[0]
+			no default, tem uma função para gerar objeto Date com a string que vier; depois usa o .toIsoString() e tira tudo depois do "T"			
+	trata como? cria novo objeto Date, a partir da string sem o "T" (e sem a hora) e salva no banco de dados
+	## Ixi, aí o loader interpreta a data errado e ela cai pro dia anterior!
+	##Nota: falta atualizar a condição 'Entregue', inclusive pra preencher a data de entrega
+	##Nota: verificar as 7 versões da agenda, o uso de endpoints de API e de funções action
+	
+CUSTOHORA - timestamp (2025-01-01 00:00:00.000)
+	recebe como? recebe como string
+	lê como? O action compara com o esquema zod (data como string); cria 'inicio' e 'fim' como objetos new Date e usa eles no prisma; 
+	trata como? No render, quando lê a string e usa .toLocaleString, aí ele mostra como um dia antes (errado)
+	
+OBRA - timestamp (2024-08-01 00:00:00.000)
+PESSOA - timestamp (2024-12-14 22:26:49.000)
+REGISTRO - timestamp (2025-01-01 00:00:00.000)
+TASK -  - timestamp (2025-06-02 11:00:00.000) //MAS EU NÃO PASSEI A HORA, DE ONDE ELE TIROU A HORA?

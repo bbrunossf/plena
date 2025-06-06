@@ -53,8 +53,8 @@ export const loader = async () => {
         Id: evento.id,
         Subject: evento.titulo,
         Description: evento.descricao,
-        StartTime: new Date(evento.data_hora_inicial),
-        EndTime: new Date(evento.data_hora_final),
+        StartTime: new Date(evento.data_hora_inicio),
+        EndTime: new Date(evento.data_hora_termino),
         IsAllDay: evento.dia_inteiro,        
         ObraId: evento.id_obra,  // campo personalizado para o código da obra
         entregue: evento.entregue,        
@@ -125,10 +125,10 @@ export const loader = async () => {
 
 //funcao para pegar data e hora no formato ISO, e criar um objeto Date
 function myfunc(dateString) {
-  const x = new Date (dateString);
+  const x = new Date(dateString).toISOString().split("T")[0];
+  console.log(`data convertida de ${dateString} para ${x}`);
   return x;
-}
-  
+}  
     try {
       switch (actionType) {
         case 'create':          
@@ -143,14 +143,27 @@ function myfunc(dateString) {
           //   }
           // });
           // return json(newEvent);           
-          const data_hora_inicio_convert = myfunc(startTime).toISOString().replace("T", " ").replace(".000Z", "");
-          const data_hora_termino_convert = myfunc(endTime).toISOString().replace("T", " ").replace(".000Z", "");
-          const atualizadoEm_convert = myfunc(startTime).toISOString().replace("T", " ").replace(".000Z", "");
+          const data_hora_inicio_convert = new Date (myfunc(startTime));
+          const data_hora_termino_convert = new Date (myfunc(startTime));
+          const atualizadoEm_convert = new Date (myfunc(startTime));
 
-          const newEvent = await prisma.$executeRaw(
-            Prisma.sql`INSERT INTO agenda (titulo, descricao, data_hora_inicio, data_hora_termino, dia_inteiro, id_obra, atualizadoEm)
-                       VALUES (${subject.toString()}, ${description?.toString() || ''}, ${data_hora_inicio_convert}, ${data_hora_termino_convert}, ${isAllDay}, ${15}, ${atualizadoEm_convert})`
-          );
+          // const newEvent = await prisma.$executeRaw(
+          //   Prisma.sql`INSERT INTO agenda (titulo, descricao, data_hora_inicio, data_hora_termino, dia_inteiro, id_obra, atualizadoEm)
+          //              VALUES (${subject.toString()}, ${description?.toString() || ''}, ${data_hora_inicio_convert}, ${data_hora_termino_convert}, ${isAllDay}, ${15}, ${atualizadoEm_convert})`
+          // );
+          const newEvent = await prisma.agenda.create({
+            data: {
+              titulo: subject.toString(),
+              descricao: description?.toString() || '',
+              data_hora_inicio: data_hora_inicio_convert,
+              data_hora_termino: data_hora_termino_convert,
+              dia_inteiro: isAllDay,
+              id_obra: 15, // salvando o id da obra
+              entregue: entregue,
+              entregue_em: entregue_em,
+              atualizadoEm: atualizadoEm_convert
+            }
+          });
   
           return json(newEvent);
           
