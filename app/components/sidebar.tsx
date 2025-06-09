@@ -8,7 +8,7 @@ export default function Sidebar() {
     { to: '/pessoas', label: 'Funcionários' },        
     { to: '/custoHora', label: 'Cadastro de Valores' },        
     { to: '/obras', label: 'Obras' },    
-    { to: '/costs5', label: 'Custos' },    ,
+    { to: '/costs6', label: 'Custos' },    ,
     { to: '/registros', label: 'Registros' },
     { to: '/mes2', label: 'Registros por Mês' },
 	  { to: '/relatorioObras', label: 'Registros por Obra, por Mês' },	

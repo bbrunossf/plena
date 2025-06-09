@@ -2,7 +2,8 @@ import { registerLicense } from '@syncfusion/ej2-base';
 registerLicense("ORg4AjUWIQA/Gnt2XVhhQlJHfV5AQmBIYVp/TGpJfl96cVxMZVVBJAtUQF1hTH5Wd0xjX31Xc31cQ2hbWkZ+");
 
 //import { cssBundleHref } from "@remix-run/css-bundle";
-
+import { json, LoaderFunction } from "@remix-run/node";
+import { useLoaderData } from "@remix-run/react";
 
 import {
   Links,
@@ -117,6 +118,12 @@ import {setCulture} from '@syncfusion/ej2-base';
 // import "../node_modules/@syncfusion/ej2-base/styles/material.css";
 // import "../node_modules/@syncfusion/ej2-buttons/styles/material.css";
 
+export const loader: LoaderFunction = async () => {
+  return json({
+    showDevBorder: process.env.SHOW_DEV_BORDER == 'true' //verificar se a variável de ambiente é igual a 'true'
+  });
+};
+
 export const links: LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
@@ -139,7 +146,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Meta />
         <Links />
       </head>
-      <body className="bg-gray-100 overflow-x-hidden border-8 border-yellow-500"> {/* //overflow-x-hidden para não ter scroll horizontal */}      
+      <body className="bg-gray-100 overflow-x-hidden">
         <div className="flex">
           <Sidebar />
           {/* <main className="ml-64 flex-1 p-8"> */}
@@ -157,14 +164,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
 //App não está chamando o Layout, tenho que ver depois as sobreposições de formatação
 
 export default function App() {
+  const { showDevBorder } = useLoaderData<typeof loader>();
+  console.log('showDevBorder:', showDevBorder);
+
   return (
     // <div className="flex">
       // <Sidebar />
       // {/* <main className="ml-64 flex-1 p-8"> */}
+    <div className={showDevBorder ? 'border-8 border-yellow-500' : ''}>
+      <Outlet />
       
-        <Outlet />
-      
-      // {/* </main> */}
-    // </div>
+    {/* </main> */}
+    </div>
   );
 }

@@ -93,13 +93,22 @@ export const loader = async () => {
       ],      
     });
 
-
+const registrosFormatados = registros.map(registro => {
+  // Cria uma nova data ajustando o timezone para evitar mudança de dia
+  const date = new Date(registro.timestamp);
+  const adjustedDate = new Date(date.getTime() + date.getTimezoneOffset() * 60000);
+  
+  return {
+    ...registro,      
+    timestamp: adjustedDate
+  };
+}) ?? []
  
 
   const groupedData = _.groupBy(registros, "obra.nome_obra"); 
   const nomesFuncionarios = _.uniqBy(registros, "pessoa.nome").map((r) => r.pessoa.nome);
 
-  return ({ registros, groupedData, nomesFuncionarios });
+  return ({ registros: registrosFormatados, groupedData, nomesFuncionarios });
 };
 
 
@@ -123,8 +132,8 @@ export default function ProjetoHoras() {
       const minDate = new Date(Math.min(...allDates));      
       const maxDate = new Date(Math.max(...allDates));
 
-      console.log(minDate.toISOString().split('T')[0]);
-      console.log(maxDate.toISOString().split('T')[0]);
+      //console.log(minDate.toISOString().split('T')[0]);
+      //console.log(maxDate.toISOString().split('T')[0]);
       
       return {
         min: minDate.toISOString().split('T')[0], // Format as YYYY-MM-DD //não precisa mais porque arrumei na query
@@ -275,7 +284,7 @@ export default function ProjetoHoras() {
 
   // Format for the GridComponent
   //HH = 24 hours, hh = 12 hours
-  const shipFormat: object = { type: 'dateTime', format: 'dd/MM/yy HH:mm:ss' }; //não precisa mais porque arrumei na query
+  const shipFormat: object = { type: 'dateTime', format: 'dd/MM/yyyy HH:mm:ss' }; //não precisa mais porque arrumei na query
 
 
   return (
@@ -413,7 +422,7 @@ export default function ProjetoHoras() {
           >
             <ColumnsDirective>
               {/* <ColumnDirective field="nome" headerText="Funcionário" width="150" /> */}
-              <ColumnDirective field="timestamp" headerText="Data" width="180" format={shipFormat}/>
+              <ColumnDirective field="timestamp" headerText="Data" width="180" format={shipFormat} type="date"/>
               <ColumnDirective field="obra.cod_obra" headerText="Obra" width="80" />
               <ColumnDirective field="obra.nome_obra" headerText="Projeto" width="180" />
               <ColumnDirective field="tipoTarefa.nome_tipo" headerText="Tipo de Tarefa" width="200" />

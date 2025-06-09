@@ -37,8 +37,16 @@ const feriados = [
 
 // Função para verificar se uma data é feriado
 const isFeriado = (timestamp: string | Date): { isFeriado: boolean; nomeFeriado?: string } => {
-  const dateString = new Date(timestamp).toISOString().split('T')[0];    
+  const date = new Date(timestamp);
+  
+  // Usar toLocaleDateString para evitar problemas de timezone
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const dateString = `${year}-${month}-${day}`;
+  
   const feriado = feriados.find(f => f.data === dateString);
+  
   return {
     isFeriado: !!feriado,
     nomeFeriado: feriado?.nome
@@ -94,15 +102,15 @@ export const loader = async () => {
 });
 
 const registrosMapeados = registros
-  .filter((r) => {
-    const date = new Date(r.timestamp);
-    const day = date.getDay(); // 0 = domingo, 6 = sábado
-    const hour = date.getHours();
-    const { isFeriado: ehFeriado } = isFeriado(r.timestamp);
+  // .filter((r) => {
+  //   const date = new Date(r.timestamp);
+  //   const day = date.getDay(); // 0 = domingo, 6 = sábado
+  //   const hour = date.getHours();
+  //   const { isFeriado: ehFeriado } = isFeriado(r.timestamp);
 
-    //return ehFeriado; //só para testar
-    return day === 0 || day === 6 || hour >= 19 || ehFeriado; // Filtro equivalente ao strftime
-  })
+  //   //return ehFeriado; //só para testar
+  //   return day === 0 || day === 6 || hour >= 19 || ehFeriado; // Filtro equivalente ao strftime
+  // })
   .map((r) => {
     const date = new Date(r.timestamp);
     const day = date.getDay();    
@@ -127,7 +135,8 @@ const registrosMapeados = registros
       nome_categoria: r.categoria.nome_categoria,
       nome: r.pessoa.nome,      
       horas_trabalhadas: r.duracao_minutos,
-      timestamp: new Date(r.timestamp).toLocaleString().replace(',', ''), // Formatação da data, de ISO para pt-BR
+      //timestamp: new Date(r.timestamp).toLocaleString(), // dd/mm/yyyy hh:mm:ss, com vírgula mesmo, fica melhor de ler
+      timestamp: new Date(r.timestamp).toISOString().slice(0, -1),
       hora_extra: r.hora_extra,
       dia_semana: dia_semana,
       // Adiciona campos para controle do hover/tooltip
@@ -182,6 +191,13 @@ export default function HoursPage() {
 
   //const [selectedHours, setSelectedHours] = useState({}); // Mapeia os registros selecionados
   const [selectedEmployee, setSelectedEmployee] = useState(''); // Estado para o funcionário selecionado  
+  const [filtroHorario, setFiltroHorario] = useState({
+    incluirSabados: true,
+    incluirDomingos: true,
+    horaInicio: '19:00',
+    horaFim: '23:59',
+    usarFiltroHorario: true
+  });
     
   // const handleCheckboxChange = (id) => {
   //   setRegistrosLocais((prev) =>
@@ -208,11 +224,43 @@ export default function HoursPage() {
 
 // Filtra os registros pelo nome do funcionário selecionado
 // Se não houver funcionário selecionado, retorna todos os registros
+// const registrosFiltrados = useMemo(() => {
+//   return selectedEmployee      
+//     ? registros.filter(r => r.nome === selectedEmployee)  // Correto!
+//     : registros;
+// }, [selectedEmployee, registros]);
 const registrosFiltrados = useMemo(() => {
-  return selectedEmployee      
-    ? registros.filter(r => r.nome === selectedEmployee)  // Correto!
+  let filtrados = selectedEmployee      
+    ? registros.filter(r => r.nome === selectedEmployee)
     : registros;
-}, [selectedEmployee, registros]);
+
+  // Aplica filtros customizados
+  filtrados = filtrados.filter((r) => {
+    const date = new Date(r.timestamp);
+    const day = date.getDay(); // 0 = domingo, 6 = sábado
+    const hour = date.getHours();
+    const minutes = date.getMinutes();
+    const timeString = `${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    const { isFeriado: ehFeriado } = isFeriado(r.timestamp);
+
+    // Sempre inclui feriados
+    if (ehFeriado) return true;
+
+    // Verifica fins de semana
+    if (day === 0 && !filtroHorario.incluirDomingos) return false;
+    if (day === 6 && !filtroHorario.incluirSabados) return false;
+    if ((day === 0 || day === 6) && (filtroHorario.incluirDomingos || filtroHorario.incluirSabados)) return true;
+
+    // Verifica horário personalizado (para dias úteis)
+    if (filtroHorario.usarFiltroHorario && day >= 1 && day <= 5) {
+      return timeString >= filtroHorario.horaInicio && timeString <= filtroHorario.horaFim;
+    }
+
+    return false;
+  });
+
+  return filtrados;
+}, [selectedEmployee, registros, filtroHorario]);
 
 //const [registrosLocais, setRegistrosLocais] = useState(registrosFiltrados);
 
@@ -230,7 +278,18 @@ const columns = [
   { key: 'cod_obra', name: 'Código da Obra', width: 120 },
   { key: 'nome_tipo', name: 'Tipo de Tarefa', width: 250 },
   { key: 'nome_categoria', name: 'Categoria', width: 120 },
-  { key: 'timestamp', name: 'Data e Hora', width: 200 },
+
+  //{ key: 'timestamp', name: 'Data e Hora', width: 200 },
+  {
+  key: 'timestamp',
+  name: 'Data e Hora',
+  width: 200,
+  formatter: ({ row }) => {
+    // Converter de volta para Date e formatar localmente
+    return new Date(row.timestamp).toLocaleString('pt-BR');
+  }
+},
+
   { key: 'nome', name: 'Nome', width: 150 },
   { key: 'horas_trabalhadas', name: 'Minutos', width: 80 },
   { 
@@ -273,6 +332,100 @@ return (
       {Array.from(changedIds).map(id => (
       <input key={id} type="hidden" name="selectedIds" value={id} />
     ))}      
+      
+      {/* Controles de Filtro */}
+      <div className="mb-6 p-4 border rounded bg-gray-50">
+        <h3 className="text-lg font-semibold mb-3">Filtros de Horário</h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Checkbox para Sábados */}
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="incluirSabados"
+              checked={filtroHorario.incluirSabados}
+              onChange={(e) => setFiltroHorario(prev => ({
+                ...prev,
+                incluirSabados: e.target.checked
+              }))}
+              className="mr-2"
+            />
+            <label htmlFor="incluirSabados">Incluir Sábados</label>
+          </div>
+
+          {/* Checkbox para Domingos */}
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="incluirDomingos"
+              checked={filtroHorario.incluirDomingos}
+              onChange={(e) => setFiltroHorario(prev => ({
+                ...prev,
+                incluirDomingos: e.target.checked
+              }))}
+              className="mr-2"
+            />
+            <label htmlFor="incluirDomingos">Incluir Domingos</label>
+          </div>
+
+          {/* Checkbox para usar filtro de horário */}
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="usarFiltroHorario"
+              checked={filtroHorario.usarFiltroHorario}
+              onChange={(e) => setFiltroHorario(prev => ({
+                ...prev,
+                usarFiltroHorario: e.target.checked
+              }))}
+              className="mr-2"
+            />
+            <label htmlFor="usarFiltroHorario">Filtrar por horário</label>
+          </div>
+        </div>
+
+        {/* Controles de horário */}
+        {filtroHorario.usarFiltroHorario && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div>
+              <label htmlFor="horaInicio" className="block text-sm font-medium mb-1">
+                Hora de Início
+              </label>
+              <input
+                type="time"
+                id="horaInicio"
+                value={filtroHorario.horaInicio}
+                onChange={(e) => setFiltroHorario(prev => ({
+                  ...prev,
+                  horaInicio: e.target.value
+                }))}
+                className="w-full p-2 border rounded"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="horaFim" className="block text-sm font-medium mb-1">
+                Hora de Fim
+              </label>
+              <input
+                type="time"
+                id="horaFim"
+                value={filtroHorario.horaFim}
+                onChange={(e) => setFiltroHorario(prev => ({
+                  ...prev,
+                  horaFim: e.target.value
+                }))}
+                className="w-full p-2 border rounded"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Informação sobre feriados */}
+        <div className="mt-3 text-sm text-gray-600">
+          <strong>Nota:</strong> Feriados são sempre incluídos independente dos filtros acima.
+        </div>
+      </div>
       
       {/* Menu Dropdown para seleção de funcionário */}
       <div className="mb-4">

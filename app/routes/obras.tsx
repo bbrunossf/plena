@@ -1,7 +1,7 @@
 import { registerLicense } from '@syncfusion/ej2-base';
 registerLicense("ORg4AjUWIQA/Gnt2XVhhQlJHfV5AQmBIYVp/TGpJfl96cVxMZVVBJAtUQF1hTH5Wd0xjX31Xc31cQ2hbWkZ+");
 
-//import { json, type ActionArgs } from "@remix-run/node";
+import { json } from "@remix-run/node";
 import { Form, useLoaderData } from "@remix-run/react";
 //import { prisma } from "~/db.server";
 import {type ClientActionFunctionArgs } from "@remix-run/react";
@@ -24,7 +24,24 @@ import { getObras, getClientes } from "~/services/dbObras.server";
 export const loader = async () => {  
   const obras = await getObras();
   const clientes = await getClientes();
-  return { obras, clientes };
+
+  const obrasFormatadas = obras.map(obra => {
+  // Cria uma nova data ajustando o timezone para evitar mudança de dia
+  const date = new Date(obra.data_inicio);
+  const adjustedDate = new Date(date.getTime() + date.getTimezoneOffset() * 60000);
+  
+  return {
+    ...obra,      
+    data_inicio: adjustedDate
+  };
+}) ?? []
+    
+  
+    return json({obras: obrasFormatadas, clientes});
+
+
+
+  //return { obras, clientes };
 };
 
 
@@ -32,6 +49,7 @@ export const loader = async () => {
 
 export default function Obras() {  
   const { obras, clientes } = useLoaderData<typeof loader>();
+  console.log(obras[0].data_inicio);
   
   const commands = [
     { 
@@ -115,7 +133,10 @@ export default function Obras() {
     }
   };
 
-
+  //o GridComponent precisa de um objeto Date para receber o parametro 'format' do tipo 'date'
+  //O GridComponent funciona melhor quando recebe Date objects, não strings formatadas.
+  //const shipFormat: object = { type: 'date', format: 'dd/MM/yyyy' }; //não precisa mais porque arrumei na query
+  const shipFormat: object = { type: 'date', format: 'dd/MM/yyyy', skeleton: 'yMd' };
 
   const editparams = {
     dataSource: clientes,
@@ -153,7 +174,7 @@ const dropDownEditParams: IEditCell = {
               editType='dropdownedit' headerText="Cliente" textAlign="Center"
               edit={dropDownEditParams} />
           
-          <ColumnDirective field="data_inicio" editType='datepickeredit' headerText="Data Início" textAlign="Center" format="dd/MM/yyyy" />
+          <ColumnDirective field="data_inicio" editType='datepickeredit' headerText="Data Início" textAlign="Center"  format={shipFormat}   type="date"/>
           <ColumnDirective field="total_horas_planejadas" editType='numericedit' headerText="Horas Planejadas" textAlign="Center" />
           <ColumnDirective headerText="Ações" width="150" commands={commands} />
         </ColumnsDirective>

@@ -1,11 +1,9 @@
 import { json, redirect } from "@remix-run/node";
 import { useLoaderData, Form, useActionData,  useNavigation } from "@remix-run/react";
 import { prisma } from "~/db.server";
-import { requireAdmin } from "~/auth.server";; // Função de autenticação
+import { requireAdmin } from "~/auth.server"; // Função de autenticação
 import { z } from "zod";
-import { formatarDataBR, formatarValorBR } from "~/lib/utils/date";
-import { format, fromZonedTime, toZonedTime } from "date-fns-tz";
-import { parseISO  } from "date-fns";
+
 
 export const loader = async ({ request }: { request: Request }) => {
   await requireAdmin(request); // Garante que só usuários autenticados acessem
@@ -24,12 +22,13 @@ export const loader = async ({ request }: { request: Request }) => {
     // Mapeie os custos e formate a data para cada custo
     custos: pessoa.custos.map(custo => ({
       ...custo,
-      inicioVigencia: custo.inicioVigencia // Formato adequado para datetime-local
+      inicioVigencia: new Date(custo.inicioVigencia).toISOString().slice(0, -1), // Converte para ISO string e retira o 'Z' final. É SÓ ISSO QUE PRECISA!
     })) ?? [] // Certifique-se de lidar com o caso em que pessoa.custos é undefined
   }));
 
-  //return json({ pessoas });
   return json({pessoas: pessoasFormatadas});
+  //return json({ pessoas });
+  
 };
 
 const CustoHoraSchema = z.object({
@@ -109,11 +108,11 @@ export const action = async ({ request }: { request: Request }) => {
   const { pessoaId, custoHora, custoHoraExtra, inicioVigencia, fimVigencia } = parseResult.data;
 
   // Converte a data de entrada do formulário para UTC
-  const inicioVigenciaUTC = fromZonedTime(inicioVigencia, 'America/Sao_Paulo');
-  const fimVigenciaUTC = fromZonedTime(fimVigencia, 'America/Sao_Paulo');
+  // const inicioVigenciaUTC = fromZonedTime(inicioVigencia, 'America/Sao_Paulo');
+  // const fimVigenciaUTC = fromZonedTime(fimVigencia, 'America/Sao_Paulo');
 
-  const inicio = new Date(inicioVigenciaUTC);
-  const fim = fimVigencia ? new Date(fimVigenciaUTC) : null;
+  const inicio = new Date(inicioVigencia);
+  const fim = fimVigencia ? new Date(fimVigencia) : null;
 
   // Calcula a data de fim para as vigências anteriores (um dia antes da nova vigência)
   const fimVigenciaAnterior = new Date(inicio);
@@ -169,20 +168,11 @@ export const action = async ({ request }: { request: Request }) => {
 
 export default function CustoHoraAdminPage() {
   const { pessoas } = useLoaderData<typeof loader>();
-  console.log(pessoas[0].custos[0].inicioVigencia); //2025-01-01T00:00:00.000Z usando fromZonedTime no loader
-  //console.log( format (pessoas[0].custos[0].inicioVigencia, "dd/MM/yyyy") ); //31/12/2024 usando fromZonedTime no loader
-  //console.log( format ((new Date(pessoas[0].custos[0].inicioVigencia)), "dd/MM/yyyy") ); //31/12/2024 usando fromZonedTime no loader
-
+  //console.log("exemplo de dado vindo do loader:", pessoas[0].custos[0].inicioVigencia); //2025-01-01T00:00:00.000Z usando fromZonedTime no loader
+  
   const actionData = useActionData<typeof action>();
   const navigation  = useNavigation();
-
-  // Função auxiliar para converter UTC para timezone local na exibição
-  const formatarDataParaExibicao = (data: Date) => {
-    const datalocal = new Date(data.getTime() + (3 * 60 * 60 * 1000)).toLocaleDateString('pt-BR');  
-    console.log("resultado da conversão:", datalocal);
-    return datalocal
-  };
-
+  
   return (
     //{/* container principal */}
     <div className="flex space-x-4 w-full"> {/* Início do contêiner principal flex */}
@@ -270,13 +260,17 @@ export default function CustoHoraAdminPage() {
                   {pessoa.custos.map((custo) => (
                     <li key={custo.id}>
                       {`R$ ${custo.custoHora} / R$ ${custo.custoHoraExtra} `}
-                      ({formatarDataParaExibicao(new Date(custo.inicioVigencia))} -{" "}
+                      {/* ({new Date(custo.inicioVigencia).toISOString()} -{" "}
                       {custo.fimVigencia
-                      ? formatarDataParaExibicao(new Date(custo.fimVigencia))
-                      : "Ativo"})
+                      ? new Date(custo.fimVigencia).toISOString()
+                      : "Ativo"}) */}
                       
                        {/* (Início: {format(new Date(custo.inicioVigencia), "dd/MM/yyyy")} - 
                        Fim: {custo.fimVigencia ? format(new Date(custo.fimVigencia), "dd/MM/yyyy") : "Ativo"})   */}
+                       
+
+                       (Início: {new Date(custo.inicioVigencia).toLocaleDateString()} - 
+                       Fim: {new Date(custo.fimVigencia).toLocaleDateString() ? "Vigente" : ""})  
                     </li>
                   ))}
                 </ul>
