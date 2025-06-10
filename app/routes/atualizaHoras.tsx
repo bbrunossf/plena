@@ -22,8 +22,8 @@ const feriados = [
   { data: '2025-03-05', nome: 'Quarta-feira de Cinzas' },
   { data: '2025-04-18', nome: 'Sexta-feira Santa' },
   { data: '2025-04-21', nome: 'Tiradentes' },
-  //28-04 foi dia normal de trabalho; dia 29-04 foi feriado (trocamos)
-  { data: '2025-04-29', nome: 'N. S. da Penha' },  
+  //28-04 foi dia normal de trabalho; dia 02-05 foi feriado (trocamos)
+  { data: '2025-05-02', nome: 'N. S. da Penha' },  
   { data: '2025-05-01', nome: 'Dia do Trabalhador' },
   { data: '2025-06-19', nome: 'Corpus Christi' },
   { data: '2025-09-07', nome: 'Independência do Brasil' },

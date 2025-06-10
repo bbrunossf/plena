@@ -48,6 +48,9 @@ export async function getObras() {
         total_horas_planejadas: true,
         observacoes_planejamento: true,
       },
+      orderBy: {
+        cod_obra: 'asc',
+      }
     }
   );
 }

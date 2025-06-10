@@ -84,6 +84,8 @@ export const action: ActionFunction = async ({ request }) => {
           notes: task.notes,
           order: task.order, //se a tarefa foi colada, ela tem o order definido
         };
+        //check: exibir o campo de notas, para conferir
+        //console.log("Notas:", task.notes);
         
         // Para tarefas novas, adicionar o order
         if (!task.order) {

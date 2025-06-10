@@ -22,9 +22,11 @@ import '@syncfusion/ej2-treegrid/styles/material.css';
 import '@syncfusion/ej2-react-schedule/styles/material.css';
 import '@syncfusion/ej2-react-grids/styles/material.css';
 
+import '@syncfusion/ej2-richtexteditor/styles/material.css';
+
 import { GanttComponent } from '@syncfusion/ej2-react-gantt'
 //import { DataManager, WebApiAdaptor } from '@syncfusion/ej2-data'
-import { ColumnsDirective, ColumnDirective, Inject, Selection, AddDialogFieldsDirective, AddDialogFieldDirective, RowDD, ZoomTimelineSettings } from '@syncfusion/ej2-react-gantt';
+import { ColumnsDirective, ColumnDirective, Inject, Selection, AddDialogFieldsDirective, AddDialogFieldDirective, EditDialogFieldsDirective, EditDialogFieldDirective, RowDD, ZoomTimelineSettings } from '@syncfusion/ej2-react-gantt';
 import { Edit, Toolbar, ToolbarItem } from '@syncfusion/ej2-react-gantt';
 import { DayMarkers, ContextMenu, Reorder, ColumnMenu, Filter, Sort } from '@syncfusion/ej2-react-gantt';
 
@@ -433,7 +435,7 @@ const handleSaveButton = async () => {
             //   'ZoomIn', 'ZoomOut', 'ExpandAll', 'CollapseAll']}
   const customToolbarItems: any[] = [
     'Edit', 'Update', 'Delete', 'Cancel', 'Indent', 'Outdent', 
-    'ZoomIn', 'ZoomOut', 'ZoomToFit',
+    'ZoomIn', 'ZoomOut', 'ZoomToFit', 'Undo', 'Redo',
     { text: 'Colar Tarefas', tooltipText: 'Colar Tarefas', id: 'pasteTasks' },
   ];
 
@@ -452,14 +454,17 @@ const handleSaveButton = async () => {
     duration: 'Duration',
     progress: 'Progress',
     parentID: 'parentId', //esse é a relação para dados flat 
-    //notes: 'notes',          
+    notes: 'notes',          
     resourceInfo: 'Resources', //resourceInfo precisa ter para aparecer na caixa de diálogo, senão nem aparece. 
     //resourceInfo:'Resources' aparece todos os recursos selecionados para a tarefa
     //resourceInfo: 'resource' aparece os recursos selecionados para a tarefa, mas nenhum selecionado ?
     //parece que tem ser o mesmo  valor colocado em ColumnDirective (mas eu não coloquei)
     //child: 'subtasks', //Não se usa o child, pois os dados são planos (flat)          
     dependency: 'Predecessor', //tem que ser 'dependency'; o da direita é o nome do campo no GanttComponent    
+  }
 
+  const NotesAditionalParams={
+    
   }
   
   function queryTaskbarInfo(args) {
@@ -584,40 +589,99 @@ const resColumnTemplate = (props) => {
 
 const template = resColumnTemplate.bind(this);
 
-const rowDrop = async (args: any) => {
-  console.log(args);  
+// const rowDrop = async (args: any) => {
+//   console.log(args);  
 
-  // Verifica se há valor em taskData ou se a tarefa foi arrastada para a posição 'middleSegment'
-  if (!args.data || !args.data[0] || !args.data[0].taskData || args.dropPosition === 'middleSegment') {
-    console.warn('Nenhum dado de tarefa encontrado ou Drop na posição MiddleSegment. A ação de drop não será executada.');
-    args.cancel = true;
-    const ganttInstance = ganttRef.current;
-    if (ganttInstance) {
-      ganttInstance.refresh();
-    }
-    return; // Interrompe a execução se não houver dados
-  }
-  if (args.dropPosition != "middleSegment") {
-   const dragidMapping = args.data[0].taskData.TaskID;// Obter o ID da tarefa arrastada    
-   const dropidMapping = args.dropRecord?.taskData?.TaskID || null; // Obter o ID da tarefa de destino // Pode ser null se for root
+//   // Verifica se há valor em taskData ou se a tarefa foi arrastada para a posição 'middleSegment'
+//   if (!args.data || !args.data[0] || !args.data[0].taskData || args.dropPosition === 'middleSegment') {
+//     console.warn('Nenhum dado de tarefa encontrado ou Drop na posição MiddleSegment. A ação de drop não será executada.');
+//     args.cancel = true;
+//     const ganttInstance = ganttRef.current;
+//     if (ganttInstance) {
+//       ganttInstance.refresh();
+//     }
+//     return; // Interrompe a execução se não houver dados
+//   }
+//   if (args.dropPosition != "middleSegment") {
+//    const dragidMapping = args.data[0].taskData.TaskID;// Obter o ID da tarefa arrastada    
+//    const dropidMapping = args.dropRecord?.taskData?.TaskID || null; // Obter o ID da tarefa de destino // Pode ser null se for root
    
-   const payload = {
-    dragidMapping: dragidMapping,
-    dropidMapping: dropidMapping,
-    dragorderMapping: args.data[0].taskData.order,
-    droporderMapping: args.dropRecord?.taskData.order || null,
-    position: args.dropPosition
-  };
+//    const payload = {
+//     dragidMapping: dragidMapping,
+//     dropidMapping: dropidMapping,
+//     dragorderMapping: args.data[0].taskData.order,
+//     droporderMapping: args.dropRecord?.taskData.order || null,
+//     position: args.dropPosition
+//   };
 
-  console.log('==========================Payload Enviado:', JSON.stringify(payload, null, 2));
-  // Enviar para a API
-  const response = await fetch("/api/task-reorder", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),   
-  });
+//   console.log('==========================Payload Enviado:', JSON.stringify(payload, null, 2));
+//   // Enviar para a API
+//   const response = await fetch("/api/task-reorder", {
+//     method: "POST",
+//     headers: { "Content-Type": "application/json" },
+//     body: JSON.stringify(payload),   
+//   });
+// };
+// }
+const rowDrop = async (args: any) => {
+  console.log('rowDrop event:', args);  
+
+  // Verifica se é realmente uma operação de reordenação de linhas
+  // e não outras operações de drag and drop
+  if (!args.data || !Array.isArray(args.data) || args.data.length === 0) {
+    console.warn('Nenhum dado de tarefa encontrado para reordenação.');
+    return; // Não cancela, apenas retorna
+  }
+
+  // Verifica se há taskData válido
+  const taskData = args.data[0]?.taskData;
+  if (!taskData) {
+    console.warn('TaskData não encontrado.');
+    return; // Não cancela, apenas retorna
+  }
+
+  // Só processa se for uma operação de reordenação válida
+  // middleSegment indica que está sendo arrastado para dentro de outra tarefa (hierarquia)
+  if (args.dropPosition === 'middleSegment') {
+    console.log('Drop em middleSegment - operação de hierarquia permitida');
+    return; // Permite a operação, não interfere
+  }
+
+  // Verifica se é uma operação de reordenação entre tarefas do mesmo nível
+  if (args.dropPosition === 'topSegment' || args.dropPosition === 'bottomSegment') {
+    console.log('Processando reordenação de tarefas...');
+    
+    const dragidMapping = taskData.TaskID;
+    const dropidMapping = args.dropRecord?.taskData?.TaskID || null;
+    
+    const payload = {
+      dragidMapping: dragidMapping,
+      dropidMapping: dropidMapping,
+      dragorderMapping: taskData.order,
+      droporderMapping: args.dropRecord?.taskData?.order || null,
+      position: args.dropPosition
+    };
+
+    console.log('Payload para reordenação:', JSON.stringify(payload, null, 2));
+    
+    try {
+      const response = await fetch("/api/task-reorder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),   
+      });
+      
+      if (!response.ok) {
+        console.error('Erro na API de reordenação:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Erro ao executar reordenação:', error);
+    }
+  }
+  
+  // Remove o refresh desnecessário que estava causando interferência
+  // O GanttComponent já gerencia suas próprias atualizações
 };
-}
 
 //niveis de zoom com o scroll do mouse
 let customZoomingLevels: ZoomTimelineSettings[] =  [{
@@ -654,7 +718,9 @@ function dataBound() {
           actionComplete={handleActionComplete}
           rowDrop={rowDrop}
           allowFiltering={true} //Filter deve ser injetado
-          enableImmutableMode = {true}
+          enableImmutableMode = {false}
+          enableCriticalPath={true}
+          enableUndoRedo={true}
 
           resourceIDMapping='id'
           //viewType='ResourceView' //fica muito feio, agrupado por recursos
@@ -699,7 +765,7 @@ function dataBound() {
             showDeleteConfirmDialog: true,
             allowTaskbarEditing: true,
             newRowPosition: 'Below', //abaixo da linha selecionada
-            mode: 'Auto'
+            mode: 'Dialog', //'Auto', 'Dialog'
           }}
 
           toolbar={customToolbarItems} 
@@ -716,6 +782,13 @@ function dataBound() {
             <AddDialogFieldDirective type='Resources'></AddDialogFieldDirective> {/* ainda não tenho coluna para o 'Resources', então não aparece, mesmo colocando aqui */}
             <AddDialogFieldDirective type='Notes'></AddDialogFieldDirective>
           </AddDialogFieldsDirective>
+
+          <EditDialogFieldsDirective>
+              <EditDialogFieldDirective type='General' headerText='General'></EditDialogFieldDirective>
+              <EditDialogFieldDirective type='Dependency'></EditDialogFieldDirective>
+              <EditDialogFieldDirective type='Resources'></EditDialogFieldDirective>
+              <EditDialogFieldDirective type='Notes'></EditDialogFieldDirective>
+          </EditDialogFieldsDirective>
 
         {/* Só aparecem as colunas que forem definidas aqui*/}
           <ColumnsDirective>
