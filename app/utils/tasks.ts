@@ -14,6 +14,7 @@ export async function getTasks() {
       predecessor: true,
       notes: true,
       order: true,
+      isPaused: true,
       taskResources: {
         select: {
           taskResourceId: true

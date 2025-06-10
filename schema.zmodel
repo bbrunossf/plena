@@ -126,6 +126,7 @@ model Task {
   notes         String?
   progress      Float?                   @default(0.0)
   predecessor   String?
+  isPaused      Boolean?                 @default(false)  
   taskResources TaskResourceAssignment[]
 
   @@index([parentId], map: "parentId")

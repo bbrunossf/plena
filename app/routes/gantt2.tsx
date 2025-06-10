@@ -1,3 +1,5 @@
+//na caixa de seleção do 'isPaused', falta corrigir a lógica para atualizar no banco de dados
+
 import { registerLicense } from '@syncfusion/ej2-base';
 registerLicense("ORg4AjUWIQA/Gnt2XVhhQlJHfV5AQmBIYVp/TGpJfl96cVxMZVVBJAtUQF1hTH5Wd0xjX31Xc31cQ2hbWkZ+");
 
@@ -26,9 +28,10 @@ import '@syncfusion/ej2-richtexteditor/styles/material.css';
 
 import { GanttComponent } from '@syncfusion/ej2-react-gantt'
 //import { DataManager, WebApiAdaptor } from '@syncfusion/ej2-data'
-import { ColumnsDirective, ColumnDirective, Inject, Selection, AddDialogFieldsDirective, AddDialogFieldDirective, EditDialogFieldsDirective, EditDialogFieldDirective, RowDD, ZoomTimelineSettings } from '@syncfusion/ej2-react-gantt';
+import { ColumnsDirective, ColumnDirective, Inject, Selection, AddDialogFieldsDirective, AddDialogFieldDirective, EditDialogFieldsDirective, EditDialogFieldDirective, RowDD, ZoomTimelineSettings, UndoRedo } from '@syncfusion/ej2-react-gantt';
 import { Edit, Toolbar, ToolbarItem } from '@syncfusion/ej2-react-gantt';
 import { DayMarkers, ContextMenu, Reorder, ColumnMenu, Filter, Sort } from '@syncfusion/ej2-react-gantt';
+import { DropDownList } from '@syncfusion/ej2-react-dropdowns';
 
 import { getTasks, getLastOrder, getResources, getUsedResources, getEvents } from "~/utils/tasks";
 import { PropertyPane } from '~/utils/propertyPane';
@@ -90,6 +93,7 @@ export async function loader() {
     Predecessor: task.predecessor,    
     notes: task.notes,
     order: task.order,
+    isPaused: task.isPaused , //adicionar no banco de dados
     ////Resources: task.taskResources.taskResourceId // Já vem como um array de IDs
     // Mapeando taskResources para extrair os taskResourceId como um array
     Resources: task.taskResources.map((resource: any) => resource.taskResourceId)
@@ -304,6 +308,7 @@ const handleSaveButton = async () => {
     flatList.push({
       ...rest,
       parentId: parentId ?? task.parentId ?? null, // prioridade: contexto > campo da própria tarefa
+      isPaused: task.isPaused ?? false,
     });
 
     if (Array.isArray(Children) && Children.length > 0) {
@@ -460,7 +465,8 @@ const handleSaveButton = async () => {
     //resourceInfo: 'resource' aparece os recursos selecionados para a tarefa, mas nenhum selecionado ?
     //parece que tem ser o mesmo  valor colocado em ColumnDirective (mas eu não coloquei)
     //child: 'subtasks', //Não se usa o child, pois os dados são planos (flat)          
-    dependency: 'Predecessor', //tem que ser 'dependency'; o da direita é o nome do campo no GanttComponent    
+    dependency: 'Predecessor', //tem que ser 'dependency'; o da direita é o nome do campo no GanttComponent   
+    isPaused: 'isPaused' 
   }
 
   const NotesAditionalParams={
@@ -498,6 +504,10 @@ const handleSaveButton = async () => {
     args.taskbarBgColor = '#FFF0E5';
     args.progressBarBgColor = '#FF6B35'
     }
+    if (args.data.isPaused) {
+      args.taskbarBgColor = '#FFF3CD'; // amarelo claro
+      args.progressBarBgColor = '#FFA500'; // laranja
+    }
   //add a simple color if none of the above. Tenho que tirar senão sobrescreve a regra da tarefa resumo
   // else{
   // args.taskbarBgColor = '#E4E4E7';
@@ -512,9 +522,16 @@ const handleSaveButton = async () => {
       args.row.style.fontWeight = 'bold'; // Define o texto em negrito
     }
     // Verifica se a tarefa é uma tarefa filha (tem um parentId)
-  else if (args.data.parentId) {
-    args.row.style.fontStyle = 'italic'; // Define o texto em itálico
-  }
+    else if (args.data.parentId) {
+      args.row.style.fontStyle = 'italic'; // Define o texto em itálico
+    }
+    else if (args.data.isPaused) {
+      args.row.style.color = '#ff0000'; // texto vermelho, não funciona
+      //args.row.style.fontStyle = 'italic';    
+      args.row.style.fontColor = '#ff0000'; // texto vermelho, não funciona
+      args.row.style.backgroundColor = '#FFF3CD'; // amarelo claro
+    }
+  
   };
 
   const labelSettings = {
@@ -693,7 +710,64 @@ function dataBound() {
   const ganttInstance = ganttRef.current;
   ganttInstance.zoomingLevels = customZoomingLevels;
 };
-  
+
+//let isPausedDropDownObj = null;
+
+// const handleActionBegin = (args) => {
+//   if (args.requestType === 'openEditDialog') {
+//     const dialogElement = args.dialog && args.dialog.dialogContent;
+//     const rowData = args.rowData;
+
+//     if (!dialogElement) {
+//       console.warn('Elemento do diálogo não disponível.');
+//       return;
+//     }
+
+//     // Evita duplicação ao editar várias vezes
+//     if (dialogElement.querySelector('[data-field="isPaused"]')) return;
+
+//     // Cria container do campo
+//     const container = document.createElement('div');
+//     container.className = 'e-field';
+//     container.setAttribute('data-field', 'isPaused');
+//     container.style.marginTop = '12px';
+
+//     const label = document.createElement('label');
+//     label.innerText = 'Paralisada';
+//     label.style.display = 'block';
+//     label.style.marginBottom = '4px';
+
+//     const input = document.createElement('input');
+//     input.id = 'isPausedDropDown';
+
+//     container.appendChild(label);
+//     container.appendChild(input);
+//     dialogElement.appendChild(container);
+
+//     const dropDown = new DropDownList({
+//       dataSource: [
+//         { text: 'Sim', value: true },
+//         { text: 'Não', value: false }
+//       ],
+//       fields: { text: 'text', value: 'value' },
+//       value: rowData.isPaused ?? false,
+//       change: (e) => {
+//         rowData.isPaused = e.value;
+//       },
+//       placeholder: 'Paralisada?',
+//       floatLabelType: 'Always',
+//       width: '100%'
+//     });
+
+//     dropDown.appendTo(input);
+//   }
+// };
+
+
+
+
+
+
 // incluir variável para receber os eventos da Agenda e mostrar no PropertyPane
   
 
@@ -721,6 +795,7 @@ function dataBound() {
           enableImmutableMode = {false}
           enableCriticalPath={true}
           enableUndoRedo={true}
+          //actionBegin={handleActionBegin}
 
           resourceIDMapping='id'
           //viewType='ResourceView' //fica muito feio, agrupado por recursos
@@ -777,17 +852,17 @@ function dataBound() {
           {/* campos a serem exibidos na caixa de diálogo de Adicionar. Se não declarar aqui, e não tiver campo para tal, não aparece.
       Se não for especificado, os campos derivam dos valores de 'taskSettings' e 'columns'*/}
           <AddDialogFieldsDirective>            
-            <AddDialogFieldDirective type='General' headerText='General'></AddDialogFieldDirective>
+            <AddDialogFieldDirective type='General' headerText='General' ></AddDialogFieldDirective>
             <AddDialogFieldDirective type='Dependency'></AddDialogFieldDirective>
             <AddDialogFieldDirective type='Resources'></AddDialogFieldDirective> {/* ainda não tenho coluna para o 'Resources', então não aparece, mesmo colocando aqui */}
-            <AddDialogFieldDirective type='Notes'></AddDialogFieldDirective>
+            <AddDialogFieldDirective type='Notes'></AddDialogFieldDirective>            
           </AddDialogFieldsDirective>
 
           <EditDialogFieldsDirective>
-              <EditDialogFieldDirective type='General' headerText='General'></EditDialogFieldDirective>
+              <EditDialogFieldDirective type='General' headerText='General' fields={['TaskID', 'TaskName', 'StartDate', 'EndDate', 'Duration', 'isPaused']}></EditDialogFieldDirective>
               <EditDialogFieldDirective type='Dependency'></EditDialogFieldDirective>
               <EditDialogFieldDirective type='Resources'></EditDialogFieldDirective>
-              <EditDialogFieldDirective type='Notes'></EditDialogFieldDirective>
+              <EditDialogFieldDirective type='Notes'></EditDialogFieldDirective>                 
           </EditDialogFieldsDirective>
 
         {/* Só aparecem as colunas que forem definidas aqui*/}
@@ -799,10 +874,19 @@ function dataBound() {
             < ColumnDirective field= 'EndDate' headerText='Término' width= '150' > </ColumnDirective>
             < ColumnDirective field= 'Duration' width= '150' > </ColumnDirective>
             < ColumnDirective field= 'Progress' width= '150' > </ColumnDirective>
-            </ColumnsDirective>
+            <ColumnDirective  field= 'isPaused' headerText='Paralisada' width='150' editType='dropdownedit'
+            edit={{
+              params: {
+                dataSource: [
+                  { text: 'Sim', value: true },
+                  { text: 'Não', value: false }
+                ],
+                fields: { text: 'text', value: 'value' }
+              }
+            }}> </ColumnDirective>
+          </ColumnsDirective>
 
-
-          <Inject services={[Selection, Edit, Toolbar, DayMarkers, ContextMenu, Reorder, ColumnMenu, Filter, Sort, RowDD]} />
+          <Inject services={[Selection, Edit, Toolbar, DayMarkers, ContextMenu, Reorder, ColumnMenu, Filter, Sort, RowDD, UndoRedo]} />
         </GanttComponent>
       </div>
 
