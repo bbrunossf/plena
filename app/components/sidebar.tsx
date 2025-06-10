@@ -13,7 +13,7 @@ export default function Sidebar() {
     { to: '/mes2', label: 'Registros por Mês' },
 	  { to: '/relatorioObras', label: 'Registros por Obra, por Mês' },	
     { to: '/agenda', label: 'Agenda' },
-    { to: '/gantt', label: 'Cronograma' },
+    { to: '/gantt2', label: 'Cronograma' },
     { to: '/atualizaHoras', label: 'Atualizar horas extras' },
     { to: '/changepassword', label: 'Alterar senha', className: 'text-red-500' },
 	  { to: '/converter2', label: 'Conversor de Datas' },

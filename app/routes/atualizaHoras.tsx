@@ -5,7 +5,7 @@ import { json, LoaderFunction, ActionFunction } from '@remix-run/node';
 import { useMemo } from 'react';
 import { useEffect } from 'react';
 import _ from "lodash";
-import { Form } from "@remix-run/react";
+import { Form, useActionData  } from "@remix-run/react";
 import { useLoaderData } from 'react-router-dom';
 import { useState } from 'react';
 
@@ -176,7 +176,38 @@ export const action: ActionFunction = async ({ request }) => {
   }
 
   return json({ success: true });
+
+  
 };
+
+// Success Modal Component
+function SuccessModal({ isOpen, onClose, message }) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-8 max-w-md w-full shadow-xl">
+        <div className="flex items-center mb-4">
+          <div className="bg-green-100 p-2 rounded-full mr-3">
+            <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900">Sucesso!</h3>
+        </div>
+        <p className="text-gray-700 mb-6">{message}</p>
+        <div className="flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+          >
+            Fechar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // Componente principal
 // parece que é executado a cada interação do usuário com as checkboxes;é o comportamento normal do React.
@@ -184,6 +215,7 @@ export default function HoursPage() {
    const data = useLoaderData();
    //const registros = data.registros;   
    const { registros, nomesUnicos } = data; // Desestruturando os dados 
+   const actionData = useActionData();
    //const registros: any = useLoaderData();
   
    //console.log('Registros:', registros[0]);
@@ -198,6 +230,20 @@ export default function HoursPage() {
     horaFim: '23:59',
     usarFiltroHorario: true
   });
+
+  // Modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  
+  // Check for action data and show modal
+  useEffect(() => {
+    if (actionData?.success) {
+      setModalMessage(actionData.message);
+      setIsModalOpen(true);
+      // Reset changedIds after successful submission
+      setChangedIds(new Set());
+    }
+  }, [actionData]);
     
   // const handleCheckboxChange = (id) => {
   //   setRegistrosLocais((prev) =>
@@ -466,6 +512,13 @@ return (
         Marcar como Hora Extra
       </button>
     </Form>
+
+    {/* Success Modal */}
+    <SuccessModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        message={modalMessage} 
+      />
   </div>
 );
 };
