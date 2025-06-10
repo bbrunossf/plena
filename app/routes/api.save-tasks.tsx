@@ -3,9 +3,51 @@ import type { ActionFunction, LoaderFunction } from '@remix-run/node'
 import { getTasks, getResources, getLastOrder } from "~/utils/tasks";
 import { prisma } from "~/db.server";
 
+export async function loader() {
+  // Obtenha as tarefas, recursos e eventos
+  const tasks = await getTasks(); // Já vem com os recursos incluídos
+  const resources = await getResources(); // Mantemos essa chamada caso precise dos recursos independentes  
+  const x = await getLastOrder(); //ultima numeração de ordem (order) das tarefas
+  
+  // Não precisamos mais do usedResources, já que as tarefas já vêm com recursos
+
+  // Mapeando cada tarefa para a estrutura desejada
+  const tasksWithId = tasks.map((task: any) => ({
+    TaskID: task.id,
+    taskName: task.taskName,
+    StartDate: new Date(task.startDate),
+    EndDate: new Date(task.endDate),
+    Duration: task.duration,
+    Progress: task.progress,
+    parentId: task.parentId, //? String(task.parentId) : null,
+    Predecessor: task.predecessor,    
+    notes: task.notes,
+    order: task.order,
+    ////Resources: task.taskResources.taskResourceId // Já vem como um array de IDs
+    // Mapeando taskResources para extrair os taskResourceId como um array
+    Resources: task.taskResources.map((resource: any) => resource.taskResourceId)
+  }));
+
+  // Map resources to match the GanttComponent's resourceFields
+  const formattedResources = resources.map((resource: any) => ({
+    id: resource.id,
+    resourceName: resource.resourceName,
+    resourceRole: resource.resourceRole,
+  }));  
+
+  
+  return ({ tasks: tasksWithId, resources: formattedResources, x});
+}
+
 export const action: ActionFunction = async ({ request }) => {
+  console.log(request.method, " - ", request.url); //só pra checar
   try {
-    const { updatedData, deletedTasks } = await request.json();
+    const { updatedData, deletedTasks, x } = await request.json();
+    console.log("Dados recebidos no endpoint!");
+
+    if (!updatedData && !deletedTasks) {
+      return json({ success: false, error: "Nenhum dado para atualizar ou excluir." }, { status: 400 });
+    }
 
     // Processar tarefas excluídas primeiro
     if (deletedTasks && deletedTasks.length > 0) {
@@ -21,9 +63,11 @@ export const action: ActionFunction = async ({ request }) => {
     }
 
     // Obter o maior valor de order
-    const lastOrderResult = await getLastOrder();
-    let nextOrder = lastOrderResult.order + 1;
-    console.log("Maior valor de order:", nextOrder);
+    console.log("Valor de order na função loader", x.order);
+    const lastOrderResult = parseInt(x.order);    
+    const nextOrder = lastOrderResult + 1;
+    console.log("Próximo valor de order:", nextOrder);
+    console.log("Maior valor de order:", lastOrderResult);
 
     // Processar tarefas atualizadas
     if (updatedData && updatedData.length > 0) {
@@ -38,18 +82,19 @@ export const action: ActionFunction = async ({ request }) => {
           predecessor: task.Predecessor,
           parentId: task.parentId !== null ? task.parentId.toString() : null,
           notes: task.notes,
-          order: task.order,
+          order: task.order, //se a tarefa foi colada, ela tem o order definido
         };
         
         // Para tarefas novas, adicionar o order
-        if (!task.TaskID) {
-          taskData.order = nextOrder++;
+        if (!task.order) {
+          console.log("Tarefa nova, atribuindo order:", nextOrder);
+          taskData.order = nextOrder; // já incrementado anteriormente
         }
         
         const upsertedTask = await prisma.task.upsert({
-          where: { id: parseInt(task.TaskID) || 'new-task-' + Date.now() },
+          where: { id: parseInt(task.TaskID) }, //sempre vai ter um TaskID, mesmo que seja novo
           update: taskData,
-          create: { ...taskData, order: taskData.order || nextOrder++ },
+          create: { ...taskData},
         });
         
         // Processar associações de recursos de forma incremental
@@ -97,48 +142,11 @@ export const action: ActionFunction = async ({ request }) => {
         }
       }
     }
+    console.log("Dados salvos com sucesso!") ;    
 
-    console.log("Dados salvos com sucesso!") ; 
     return json({ success: true });    
-
   } catch (error) {
     console.error("Erro ao salvar os dados:", error);
     return json({ success: false, error: error.message }, { status: 500 });
   }
 };
-
-export const loader: LoaderFunction = async ({ request }) => {
-    console.log("Solicitação GET no servidor=====");
-    //chamar a função que retorna os dados    
-      const tasks = await getTasks();
-      const resources = await getResources();
-        //return { tasks, resources };
-        //console.log("Recursos encontrados:", resources);
-      
-      //depois tem que mapear os campos
-      //mapear cada campo da tarefa para um objeto
-      const tasksWithId = tasks.map((task: any, index: number) => ({
-        TaskID: task.id,
-          taskName: task.taskName,
-          StartDate: new Date(task.startDate),//.toISOString().split('T')[0],
-          EndDate: new Date(task.endDate),//.toISOString().split('T')[0],
-          Duration: task.duration,
-          Progress: task.progress,
-          parentId: task.parentId,
-          Predecessor: task.predecessor,    
-          notes: task.notes,
-          Resources: resources.map((resource: any) => resource.resourceName) // Map resource IDs
-        }));
-      
-        // Map resources to match the GanttComponent's resourceFields
-        const formattedResources = resources.map((resource: any) => ({
-          id: resource.id,
-          resourceName: resource.resourceName,
-          resourceRole: resource.resourceRole,
-        }));
-      
-        console.log("tarefas FORMATADAS", tasksWithId);
-        //console.log("Recursos formatados:", formattedResources);
-      return ({ tasks: tasksWithId, resources: formattedResources });
-      };
-      

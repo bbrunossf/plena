@@ -2,8 +2,7 @@
 import { prisma } from "~/db.server";
 
 export async function getTasks() {
-  return await prisma.task.findMany({
-    orderBy: { order: "asc" },  // Essa é a ordem que as tarefas são apresentadas no gráfico de gantt
+  return await prisma.task.findMany({    
     select: {
       id: true,
       taskName: true,
@@ -20,7 +19,8 @@ export async function getTasks() {
           taskResourceId: true
         }
       }
-    }
+    },
+    orderBy: { order: "asc" },  // Essa é a ordem que as tarefas são apresentadas no gráfico de gantt
   });
 }
 

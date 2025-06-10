@@ -19,49 +19,33 @@ import '@syncfusion/ej2-navigations/styles/material.css';
 import '@syncfusion/ej2-popups/styles/material.css';
 import '@syncfusion/ej2-splitbuttons/styles/material.css';
 import '@syncfusion/ej2-treegrid/styles/material.css';
-
-import '@syncfusion/ej2-base/styles/material.css';
-import '@syncfusion/ej2-buttons/styles/material.css';
-import '@syncfusion/ej2-calendars/styles/material.css';
-import '@syncfusion/ej2-dropdowns/styles/material.css';
-import '@syncfusion/ej2-inputs/styles/material.css';
-import '@syncfusion/ej2-lists/styles/material.css';
-import '@syncfusion/ej2-navigations/styles/material.css';
-import '@syncfusion/ej2-popups/styles/material.css';
 import '@syncfusion/ej2-react-schedule/styles/material.css';
 import '@syncfusion/ej2-react-grids/styles/material.css';
 
-
-import '@syncfusion/ej2-gantt/styles/material.css';
-import '@syncfusion/ej2-grids/styles/material.css';
-import '@syncfusion/ej2-layouts/styles/material.css';
-import '@syncfusion/ej2-splitbuttons/styles/material.css';
-import '@syncfusion/ej2-treegrid/styles/material.css';
-
 import { GanttComponent } from '@syncfusion/ej2-react-gantt'
-import { DataManager, WebApiAdaptor } from '@syncfusion/ej2-data'
+//import { DataManager, WebApiAdaptor } from '@syncfusion/ej2-data'
 import { ColumnsDirective, ColumnDirective, Inject, Selection, AddDialogFieldsDirective, AddDialogFieldDirective, RowDD, ZoomTimelineSettings } from '@syncfusion/ej2-react-gantt';
 import { Edit, Toolbar, ToolbarItem } from '@syncfusion/ej2-react-gantt';
 import { DayMarkers, ContextMenu, Reorder, ColumnMenu, Filter, Sort } from '@syncfusion/ej2-react-gantt';
 
 import { getTasks, getLastOrder, getResources, getUsedResources, getEvents } from "~/utils/tasks";
 import { PropertyPane } from '~/utils/propertyPane';
-import { DropDownListComponent } from '@syncfusion/ej2-react-dropdowns';
-import { Spinner } from '@syncfusion/ej2-react-popups';
+//import { DropDownListComponent } from '@syncfusion/ej2-react-dropdowns';
 
-import { 
-  ScheduleComponent, 
-  Day,  
-  Month,
-  Week,
-  Agenda,   
-  DragAndDrop,
-  Resize,
-  ViewsDirective,
-  ViewDirective,  
-  TimelineViews, TimelineMonth,
-  ResourcesDirective, ResourceDirective, EventRenderedArgs, renderCell, CellTemplateArgs  
-} from '@syncfusion/ej2-react-schedule';
+
+// import { 
+//   ScheduleComponent, 
+//   Day,  
+//   Month,
+//   Week,
+//   Agenda,   
+//   DragAndDrop,
+//   Resize,
+//   ViewsDirective,
+//   ViewDirective,  
+//   TimelineViews, TimelineMonth,
+//   ResourcesDirective, ResourceDirective, EventRenderedArgs, renderCell, CellTemplateArgs  
+// } from '@syncfusion/ej2-react-schedule';
 
 import {
   ChartComponent,
@@ -78,10 +62,9 @@ import {
 import { useState } from 'react';
 import { useFetcher } from "@remix-run/react";
 import { TreeViewComponent, NodeSelectEventArgs } from '@syncfusion/ej2-react-navigations';
-import { c } from "node_modules/vite/dist/node/types.d-aGj9QkWt";
 
-import { addDays, differenceInCalendarDays, isWithinInterval, startOfWeek, endOfWeek } from 'date-fns';
-import { TbRuler3 } from 'react-icons/tb';
+//import { c } from "node_modules/vite/dist/node/types.d-aGj9QkWt";
+//import { TbRuler3 } from 'react-icons/tb';
 
 
 export async function loader() {
@@ -89,19 +72,16 @@ export async function loader() {
   const tasks = await getTasks(); // Já vem com os recursos incluídos
   const resources = await getResources(); // Mantemos essa chamada caso precise dos recursos independentes
   const eventos = await getEvents(); // Se você precisar fazer mais manipulações com eventos, mantenha esta chamada
-  const x = await getLastOrder();
-
-  // Log para fins de depuração
-  //console.log("tarefas com recursos:", tasks);
-  //console.log("Recursos encontrados:", JSON.stringify(resources)); // Devolve uma lista/array de recursos
+  const x = await getLastOrder(); //ultima numeração de ordem (order) das tarefas
+  
   // Não precisamos mais do usedResources, já que as tarefas já vêm com recursos
 
   // Mapeando cada tarefa para a estrutura desejada
   const tasksWithId = tasks.map((task: any) => ({
     TaskID: task.id,
     taskName: task.taskName,
-    StartDate: new Date(task.startDate).toISOString().split('T')[0], //conferir o formato de data requerido pelo Gantt
-    EndDate: new Date(task.endDate).toISOString().split('T')[0], 
+    StartDate: new Date(task.startDate),
+    EndDate: new Date(task.endDate),
     Duration: task.duration,
     Progress: task.progress,
     parentId: task.parentId, //? String(task.parentId) : null,
@@ -138,7 +118,7 @@ export async function loader() {
 }
 
 
-
+//função para o grafico de horas por recurso
 function agruparHorasPorRecurso(tasks: any[], resources: any[]) {
   const hoje = new Date();
   const semanas = [0, 1, 2, 3].map((i) => {
@@ -207,23 +187,21 @@ function agruparHorasPorRecurso(tasks: any[], resources: any[]) {
 export default function GanttRoute() {  
   const ganttRef = useRef<GanttComponent>(null);  
   const {tasks, resources, eventos, x} = useLoaderData<typeof loader>();
-  console.log("tasks:", tasks);
-  //console.log("resources:", resources);
-  //console.log("eventos:", eventos);
+  //console.log("tasks:", tasks);
+  
   const [isLoading, setIsLoading] = useState(false); // Estado para controle do spinner
   const [showPasteModal, setShowPasteModal] = useState(false); // Estado para controlar o modal
   const [pasteData, setPasteData] = useState(''); // Estado para armazenar os dados colados  
   const [selectedResource, setSelectedResource] = useState(null);
   const [chartData, setChartData] = useState<any[]>([]);
-  const [updatedTasks, setUpdatedTasks] = useState<any[]>([]);
-
-  
+  const [updatedTasks, setUpdatedTasks] = useState<any[]>([]);  
 
  // Função para atualizar o gráfico de colunas com os dados do Gantt
  const handleUpdateChart = () => {
   if (ganttRef.current) {
-    const updatedData = ganttRef.current.dataSource; // Obtendo os dados atuais do Gantt
-    console.log("Dados do Gantt atualizados:", updatedData);
+    const ganttInstance = ganttRef.current;
+    const updatedData = ganttInstance?.dataSource; // Obtendo os dados atuais do Gantt
+    //console.log("Dados do Gantt atualizados:", updatedData);
     
     // Usar a função agruparHorasPorRecurso para processar os dados corretamente
     const newChartData = agruparHorasPorRecurso(updatedData, resources);
@@ -239,42 +217,55 @@ export default function GanttRoute() {
 };
   
 
-  
-  
+const deletedTasks: any[] = []; // lista para salvar as tarefas excluídas
 
-  const deletedTasks: any[] = []; // Track deleted tasks globally or in a state
-
-  //função para o botão de salvar
-	const handleSaveButton = async () => {
+//função para o botão de salvar
+const handleSaveButton = async () => {
     setIsLoading(true); // Ativa o spinner
-    try {    
-      const ganttInstance = ganttRef.current;
-      const updatedData = ganttInstance?.dataSource;
+    try {
+        const ganttInstance = ganttRef.current;
+        //const updatedData = ganttInstance?.dataSource;        
+        const rawData = ganttInstance?.dataSource;
+        const updatedData = flattenTasks(rawData);
 
-      console.log('Dados para salvar:', updatedData);
-      console.log('Tarefas excluídas:', deletedTasks);
 
-      //salva os dados na sessionStorage
-      sessionStorage.setItem('tasks', JSON.stringify(updatedData));
-      alert("Dados salvos com sucesso!"); // Exibe mensagem de sucesso
-     
-    
-      setTimeout(async () => {
-        const response = await fetch("/api/save-tasks", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ updatedData, deletedTasks }), // Send both updated and deleted tasks
-        });
-      }, 1000);
-    
-        //refresh GanttComponent
-        ganttInstance.refresh();
-  } catch (error) {
-    console.error("Erro ao salvar os dados:", error);    
-  }finally {
-    setIsLoading(false); // Desativa o spinner
-  }
-  };
+        //console.log('Dados para salvar:', updatedData);
+        //console.log('Tarefas excluídas:', deletedTasks);
+
+        //salva os dados na sessionStorage
+        sessionStorage.setItem('tasks', JSON.stringify(updatedData));
+        //alert("Dados salvos com sucesso!"); // Exibe mensagem de sucesso
+
+        //setTimeout(async () => {
+            const response = await fetch("/api/save-tasks", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ updatedData, deletedTasks, x }), // Send both updated and deleted tasks
+            });
+        //}, 500); // Espera 500ms para garantir que o GanttComponent tenha atualizado os dados
+        
+        console.log("tentando atualizar o GanttComponent após salvar");
+        
+        // Aguarda um pequeno tempo e busca os dados atualizados do backend
+        setTimeout(async () => {
+            const response2 = await fetch("/api/save-tasks");
+            const result = await response2.json();
+
+            // Atualiza o GanttComponent com os novos dados
+            if (ganttInstance && result?.tasks) {
+            console.log("Dados atualizados do GanttComponent:", result.tasks);
+            ganttInstance.dataSource = result.tasks;
+            ganttInstance.refresh(); // ou ganttInstance.refreshDataSource();
+            }
+        }, 500); // Espera 500ms para garantir que o GanttComponent tenha atualizado os dados
+        
+
+    } catch (error) {
+        console.error("Erro ao salvar os dados:", error);
+    } finally {
+        setIsLoading(false); // Desativa o spinner
+    }
+};
 
   // Função para lidar com a seleção de um recurso
   const onResourceSelected = (args: NodeSelectEventArgs) => {
@@ -298,80 +289,121 @@ export default function GanttRoute() {
     }    
   };
 
-  
+  function flattenTasks(tasks: any[], parentId: number | null = null, seenIds = new Set()): any[] {
+  let flatList: any[] = [];
+
+  for (const task of tasks) {
+    // Evita tarefas duplicadas com base no TaskID
+    if (seenIds.has(task.TaskID)) continue;
+    seenIds.add(task.TaskID);
+
+    const { Children, ...rest } = task;
+
+    flatList.push({
+      ...rest,
+      parentId: parentId ?? task.parentId ?? null, // prioridade: contexto > campo da própria tarefa
+    });
+
+    if (Array.isArray(Children) && Children.length > 0) {
+      const childTasks = flattenTasks(Children, task.TaskID, seenIds);
+      flatList = flatList.concat(childTasks);
+    }
+  }
+
+  return flatList;
+}
+
 
   //para exibir a resposta do componente após uma ação
   const handleActionComplete = async (args: any) => {
-    console.log("ActionComplete acionada");
-    //console.log("args:", args);
+    console.log("ActionComplete acionada"); //args só vem os registros alterados/afetados
+
+    //checar quando uma tarefa é adicionada entre duas tarefas existentes
+    //console.log("args da ação de inserir tarefa:", args);
+    
+    const ganttInstance = ganttRef.current;
+    const newData = ganttInstance?.dataSource;   
+    console.log("Dados atualizados", newData); 
+    
+    // Ordena com base no campo 'order'
+    // Verifica se é inserção de tarefa via Gantt (não colagem)
+    if ((args.requestType === 'save' || args.requestType === 'add')) {
+        const hasNewTasksWithoutOrder = newData.some(task => task.order === undefined || task.order === null);
+
+        if (hasNewTasksWithoutOrder) {
+        // Ordena tarefas existentes por 'order', undefined vai para o fim
+        const orderedTasks = [...newData].sort((a, b) => {
+            const aOrder = a.order ?? Infinity;
+            const bOrder = b.order ?? Infinity;
+            return aOrder - bOrder;
+        });
+
+        // Atualiza o campo 'order' sequencialmente
+        let currentOrder = 0;
+        for (let i = 0; i < orderedTasks.length; i++) {
+            const task = orderedTasks[i];
+
+            if (task.order === undefined || task.order === null) {
+            currentOrder += 1;
+            task.order = currentOrder;
+            } else {
+            currentOrder = task.order;
+            }
+
+            // Garante unicidade dos próximos
+            if (i < orderedTasks.length - 1) {
+            const nextTask = orderedTasks[i + 1];
+            if (nextTask.order !== undefined && nextTask.order <= task.order) {
+                nextTask.order = task.order + 1;
+            }
+            }
+        }
+
+        // Atualiza o GanttComponent e o estado local
+        if (ganttInstance) {
+            ganttInstance.dataSource = orderedTasks;
+            ganttInstance.refresh(); // ou refreshDataSource()
+        }
+
+        setUpdatedTasks(orderedTasks);
+        }
+    }
 
     if (args.action === 'TaskbarEditing') {
-      console.log("TaskbarEditing acionada");
-      const ganttInstance = ganttRef.current;
-      const newData = ganttInstance?.dataSource;   
-      console.log("Dados atualizados", newData);   
+      console.log("TaskbarEditing acionada");        
       setUpdatedTasks(newData); // Atualiza o estado com os novos dados      
-    }       
-
-    
+    }    
     if (args.requestType === 'delete') {
       deletedTasks.push(...args.data); // Add deleted tasks to the array
-      console.log('Tarefas excluídas:', deletedTasks);
+      //console.log('Tarefas excluídas:', deletedTasks);
     } 
     if (args.requestType === 'rowDropped') {      
       console.log('rowDropped ACIONADO============:', args.fromIndex);
-    }   
-  }
+    }       
+  }  
 
+//   //map all resources from 'resources' object and list its id and resourceName
+//   const resourceData: { [key: string]: Object }[] = resources.map((resource: any) => ({
+//     id: resource.id,
+//     text: resource.resourceName
+//   }));
   
-
-  //map all resources from 'resources' object and list its id and resourceName
-  const resourceData: { [key: string]: Object }[] = resources.map((resource: any) => ({
-    id: resource.id,
-    text: resource.resourceName
-  }));
-
-  // Função para processar os dados colados e criar novas tarefas
-  //Tem que arrumar a lógica do 'order', porque, ao colar várias tarefas novas, 
-  //o order não é incrementado. A regra do 'order'+1 só serve para o primeiro registro da lista de novas tarefas;
-  // as tarefas seguintes devem ter o order adicionado em 1 a cada tarefa colada.
-  // const processPastedData = (data: string) => {
-  //   const rows = data.split('\n');
-  //   rows.forEach((row) => {
-  //     if (row.trim() !== '') {
-  //       const newTask = {
-  //         //TaskID: tasks.length + 1,
-  //         taskName: row.trim(),
-  //         StartDate: new Date(),//.toISOString().split('T')[0],
-  //         // Set EndDate as one day after StartDate. Não pode usar StartDate como variável
-  //         EndDate: new Date(new Date().getTime() + 24 * 60 * 60 * 1000),//.toISOString().split('T')[0],          
-  //         //EndDate: new Date(),//.toISOString().split('T')[0],
-  //         Duration: 1,
-  //         Progress: 0,
-  //         order: x.order + 1,
-  //       };
-  //       ganttRef.current?.addRecord(newTask);
-  //     }
-  //   });
-  // };
   const processPastedData = (data: string) => {
     const rows = data.split('\n');
-    let currentOrder = x.order; // <- Ponto de partida correto
+    let currentOrder = x.order || 0; // <- Ponto de partida correto
 
     rows.forEach((row) => {
       currentOrder += 1; // <- Incrementa o order a cada nova tarefa
       if (row.trim() !== '') {
         const newTask = {
-          //TaskID: tasks.length + 1,
+          //TaskID: tasks.length + 1, //TaskID é gerado automaticamente pelo Gantt
           taskName: row.trim(),
-          StartDate: new Date(),//.toISOString().split('T')[0],
+          StartDate: new Date(), //para o Gantt, sempre objetos Date
           // Set EndDate as one day after StartDate. Não pode usar StartDate como variável
-          EndDate: new Date(new Date().getTime() + 24 * 60 * 60 * 1000),//.toISOString().split('T')[0],          
-          //EndDate: new Date(),//.toISOString().split('T')[0],
+          EndDate: new Date(new Date().getTime() + 24 * 60 * 60 * 1000), //para o Gantt, sempre objetos Date          
           Duration: 1,
-          Progress: 0,
-         // order: x.order + 1 || 1,
-         order: currentOrder, // <- Valor único e sequencial
+          Progress: 0,         
+          order: currentOrder, // <- Valor único e sequencial
         };
         ganttRef.current?.addRecord(newTask);
       }
@@ -411,8 +443,6 @@ export default function GanttRoute() {
       handleOpenPasteModal();
     }
   }
-
-
   
   const taskFields={
     id: 'TaskID',
@@ -428,7 +458,8 @@ export default function GanttRoute() {
     //resourceInfo: 'resource' aparece os recursos selecionados para a tarefa, mas nenhum selecionado ?
     //parece que tem ser o mesmo  valor colocado em ColumnDirective (mas eu não coloquei)
     //child: 'subtasks', //Não se usa o child, pois os dados são planos (flat)          
-    dependency: 'Predecessor' //tem que ser 'dependency'; o da direita é o nome do campo no GanttComponent
+    dependency: 'Predecessor', //tem que ser 'dependency'; o da direita é o nome do campo no GanttComponent    
+
   }
   
   function queryTaskbarInfo(args) {
@@ -471,7 +502,7 @@ export default function GanttRoute() {
   }
 
   const rowDataBound = (args) => {
-    // novamente verificando se a tarefa é do tipo resumo
+    // novamente verificando se a tarefa é do tipo resumo, ou seja, se ela tem tarefas filhas
     if (args.data.hasChildRecords) {
       args.row.style.fontWeight = 'bold'; // Define o texto em negrito
     }
@@ -481,13 +512,12 @@ export default function GanttRoute() {
   }
   };
 
-
-
   const labelSettings = {
     rightLabel: 'Resources'
 };
 
 
+//cores em função do recurso associado à tarefa
 const resColumnTemplate = (props) => {
   if (props.ganttProperties.resourceNames) {
     if (props.ganttProperties.resourceNames === 'Leonardo') {
@@ -554,38 +584,24 @@ const resColumnTemplate = (props) => {
 
 const template = resColumnTemplate.bind(this);
 
-
 const rowDrop = async (args: any) => {
-  console.log(args);
+  console.log(args);  
 
-  //cancelar se dropPosition for igual a MiddleSegment
-  // if (args.dropPosition === 'middleSegment') {
-  //   args.cancel = true;
-  //   console.log('Drop na posição MiddleSegment. A ação de drop não será executada.');
-  //   return;
-  // }
-
-  // Verifica se há valor em taskData
+  // Verifica se há valor em taskData ou se a tarefa foi arrastada para a posição 'middleSegment'
   if (!args.data || !args.data[0] || !args.data[0].taskData || args.dropPosition === 'middleSegment') {
-    console.warn('Nenhum dado de tarefa encontrado. A ação de drop não será executada.');
+    console.warn('Nenhum dado de tarefa encontrado ou Drop na posição MiddleSegment. A ação de drop não será executada.');
     args.cancel = true;
     const ganttInstance = ganttRef.current;
     if (ganttInstance) {
       ganttInstance.refresh();
     }
-
     return; // Interrompe a execução se não houver dados
   }
-
   if (args.dropPosition != "middleSegment") {
-
-  // Obter o ID da tarefa arrastada
-  const dragidMapping = args.data[0].taskData.TaskID;
-  
-  // Obter o ID da tarefa de destino
-  const dropidMapping = args.dropRecord?.taskData?.TaskID || null; // Pode ser null se for root
-
-  const payload = {
+   const dragidMapping = args.data[0].taskData.TaskID;// Obter o ID da tarefa arrastada    
+   const dropidMapping = args.dropRecord?.taskData?.TaskID || null; // Obter o ID da tarefa de destino // Pode ser null se for root
+   
+   const payload = {
     dragidMapping: dragidMapping,
     dropidMapping: dropidMapping,
     dragorderMapping: args.data[0].taskData.order,
@@ -609,7 +625,6 @@ let customZoomingLevels: ZoomTimelineSettings[] =  [{
                 bottomTier: { unit: 'Week', format: 'dd MMM', count: 1 }, timelineUnitSize: 66, level: 0,
                 timelineViewMode: 'Month', weekStartDay: 0, updateTimescaleView: true, showTooltip: true
 }];
-
 function dataBound() {
   const ganttInstance = ganttRef.current;
   ganttInstance.zoomingLevels = customZoomingLevels;
@@ -624,7 +639,7 @@ function dataBound() {
 
       {/* <div className='w-3/4 pr-4'>  Coluna 1: Gantt (ocupa 3/4 da largura) */}
       <div className='w-full pr-4'>
-      {isLoading && <div className="spinner">Carregando...</div>} {/* Exibição do spinner */}
+      {isLoading && <div className="spinner">Carregando...</div>} {/* Exibição do spinner em cima do grafico de gantt*/}
         {/* <div className='flex'>  Container para Gantt e Botão */}
         {/*  <div className='w-3/4'>  GanttComponent ocupa 3/4 da largura */}    
         <GanttComponent
@@ -637,7 +652,7 @@ function dataBound() {
           //dataSource={filteredTasks} // Usando a lista de tarefas filtradas
           resources={resources} //relaciona aqui os recursos que aparecem no campo de recursos do ganttcomponent, senão fica vazio
           actionComplete={handleActionComplete}
-          //rowDrop={rowDrop}
+          rowDrop={rowDrop}
           allowFiltering={true} //Filter deve ser injetado
           enableImmutableMode = {true}
 
@@ -684,7 +699,7 @@ function dataBound() {
             showDeleteConfirmDialog: true,
             allowTaskbarEditing: true,
             newRowPosition: 'Below', //abaixo da linha selecionada
-            mode: 'Dialog'
+            mode: 'Auto'
           }}
 
           toolbar={customToolbarItems} 
@@ -736,9 +751,7 @@ function dataBound() {
             </button>
           </div>
         </div>
-      )}      
-
-    
+      )}          
 
       {/* <div className='w-1/4'>  Agenda ocupa 1/4 da largura */}
       {/* <div className='w-1/4 flex flex-col'>  Coluna 2: Schedule, PropertyPane e Botão (ocupa 1/4 da largura, dispostos em coluna, ou seja, um abaixo do outro) */}
@@ -769,8 +782,6 @@ function dataBound() {
             nodeSelected={onResourceSelected} // Adicionando o manipulador de seleção do recurso            
           />
         </PropertyPane> 
-
-
           
           {/* <button onClick={() => setSelectedResource(null)} className="bg-blue-800 text-white p-2 rounded">
           Deselecionar recursos
@@ -816,9 +827,7 @@ function dataBound() {
           />
         </SeriesCollectionDirective>
       </ChartComponent>
-    )}
-
-        
+    )}        
 
       </div>
     
