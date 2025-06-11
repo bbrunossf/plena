@@ -211,14 +211,15 @@ export default function GanttRoute() {
     
     // Usar a função agruparHorasPorRecurso para processar os dados corretamente
     const newChartData = agruparHorasPorRecurso(updatedData, resources);
+    console.log("Dados do gráfico atualizados:", newChartData);
     
     // Atualiza o estado do gráfico
     setChartData(newChartData);
     
     // Se quiser verificar os dados, use setTimeout para garantir que o estado foi atualizado
-    setTimeout(() => {
-      console.log("Dados do gráfico atualizados:", chartData);
-    }, 0);
+    // setTimeout(() => {
+    //   console.log("Dados do gráfico atualizados:", chartData);
+    // }, 0);
   }  
 };
   
@@ -238,8 +239,8 @@ const handleSaveButton = async () => {
         //console.log('Dados para salvar:', updatedData);
         //console.log('Tarefas excluídas:', deletedTasks);
 
-        //salva os dados na sessionStorage
-        sessionStorage.setItem('tasks', JSON.stringify(updatedData));
+        //salva os dados na localStorage
+        localStorage.setItem('tasks', JSON.stringify(rawData)); //sala o raw, que ainda está flat (formato que o GanttComponent espera)
         //alert("Dados salvos com sucesso!"); // Exibe mensagem de sucesso
 
         //setTimeout(async () => {
@@ -272,6 +273,29 @@ const handleSaveButton = async () => {
         setIsLoading(false); // Desativa o spinner
     }
 };
+
+//função para resgatar os dados da localStorage
+const handleRestoreButton = () => {
+  const confirmRestore = window.confirm("Você tem certeza que deseja substituir os dados atuais pelos dados salvos localmente?");
+  
+  if (confirmRestore) {
+      const storedTasks = localStorage.getItem('tasks');
+      
+      if (storedTasks) {
+          const parsedTasks = JSON.parse(storedTasks);
+          
+          if (ganttRef.current) {
+              const ganttInstance = ganttRef.current;
+              ganttInstance.dataSource = parsedTasks;  // Substitui a fonte de dados do GanttComponent
+              ganttInstance.refresh();  // Atualiza o gráfico para mostrar os dados restaurados
+              alert("Os dados foram restaurados com sucesso!");
+          }
+      } else {
+          alert("Nenhum dado salvo encontrado na localStorage.");
+      }
+  }
+};
+
 
   // Função para lidar com a seleção de um recurso
   const onResourceSelected = (args: NodeSelectEventArgs) => {
@@ -320,6 +344,28 @@ const handleSaveButton = async () => {
   return flatList;
 }
 
+  //para reordenar as tarefas conforme exibidas no Gantt.
+  // Exemplo: atualizar o campo 'order' de forma que ele seja sequencial a partir do índice  
+  const updateOrderField = () => {    
+    const ganttInstance = ganttRef.current;    
+    const existingData = ganttInstance.dataSource; 
+
+    // Mapeando os dados para atualizar o campo 'order'
+    const reorderedTasks = existingData.map((task, index) => {
+        return {
+            ...task, // Espalha as propriedades da tarefa
+            order: index + 1, // Define 'order' de forma sequencial
+        };
+    });
+
+    // Atualiza o GanttComponent e o estado local     
+    ganttInstance.dataSource = reorderedTasks;
+    ganttInstance.refresh(); // ou refreshDataSource()  
+
+    setUpdatedTasks(reorderedTasks);
+      console.log("dados reordenados!"); // Aqui você pode trabalhar com as tarefas atualizadas    
+  }
+
 
   //para exibir a resposta do componente após uma ação
   const handleActionComplete = async (args: any) => {
@@ -331,6 +377,9 @@ const handleSaveButton = async () => {
     const ganttInstance = ganttRef.current;
     const newData = ganttInstance?.dataSource;   
     console.log("Dados atualizados", newData); 
+    
+    //salva os dados na localStorage a cada mudança (mantém os dados atualizados)
+    localStorage.setItem('tasks', JSON.stringify(newData)); 
     
     // Ordena com base no campo 'order'
     // Verifica se é inserção de tarefa via Gantt (não colagem)
@@ -711,6 +760,11 @@ function dataBound() {
   ganttInstance.zoomingLevels = customZoomingLevels;
 };
 
+const [alturaGantt, setAlturaGantt] = useState('700'); // altura padrão do Gantt
+const handleHeightChange = (event) => {
+  setAlturaGantt(event.target.value); // atualiza a altura com o valor do campo
+};
+
 //let isPausedDropDownObj = null;
 
 // const handleActionBegin = (args) => {
@@ -779,7 +833,18 @@ function dataBound() {
       <div className='w-full pr-4'>
       {isLoading && <div className="spinner">Carregando...</div>} {/* Exibição do spinner em cima do grafico de gantt*/}
         {/* <div className='flex'>  Container para Gantt e Botão */}
-        {/*  <div className='w-3/4'>  GanttComponent ocupa 3/4 da largura */}    
+        {/*  <div className='w-3/4'>  GanttComponent ocupa 3/4 da largura */}
+        <label>
+          Defina a altura do Gantt:
+          <input 
+            type="text" 
+            value={alturaGantt} 
+            onChange={handleHeightChange}  // atualiza a altura a cada mudança
+            className='border border-gray-300 rounded-md p-2'
+            min="300"
+          />
+        </label>
+
         <GanttComponent
           ref={ganttRef}
           id='Default'
@@ -847,7 +912,7 @@ function dataBound() {
           toolbarClick={handleToolbarClick}
 
           //toolbar={['Add', 'Edit', 'Update', 'Delete', 'Cancel', 'Indent', 'Outdent']}
-          height="700px"
+          height={`${alturaGantt}px`}
         >
           {/* campos a serem exibidos na caixa de diálogo de Adicionar. Se não declarar aqui, e não tiver campo para tal, não aparece.
       Se não for especificado, os campos derivam dos valores de 'taskSettings' e 'columns'*/}
@@ -867,7 +932,7 @@ function dataBound() {
 
         {/* Só aparecem as colunas que forem definidas aqui*/}
           <ColumnsDirective>
-            < ColumnDirective field= 'TaskID'  headerText= 'TaskID'  width= '120' > </ColumnDirective> {/* tem que ter, senão ele não reconhece nenhum campo como chave primária */}
+            < ColumnDirective field= 'TaskID'  headerText= 'TaskID'  width= '120'> </ColumnDirective> {/* tem que ter, senão ele não reconhece nenhum campo como chave primária */}
             < ColumnDirective field= 'taskName' headerText="Nome Tarefa"  width= '270' > </ColumnDirective>
             < ColumnDirective field= 'Resources'  headerText= 'Recurso'  width= '175' template= {template} > </ColumnDirective>
             < ColumnDirective field= 'StartDate' headerText='Início' width= '150' > </ColumnDirective>
@@ -891,100 +956,118 @@ function dataBound() {
       </div>
 
       {/* Modal para colar tarefas */}
-    {showPasteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-4 rounded">
+      {showPasteModal && (
+        //<div className="fixed inset-0 bg-white z-50 flex items-center justify-center">
+        <div className="fixed inset-0 bg-gray-200 bg-opacity-90 z-50 flex items-center justify-center">
+          <div className="w-full max-w-md p-6 bg-white border rounded shadow-lg">
             <textarea
               value={pasteData}
               onChange={(e) => setPasteData(e.target.value)}
               placeholder="Cole os nomes das tarefas aqui (um por linha)..."
-              className="w-full h-24 border p-2"
+              className="w-full h-32 border p-2 mb-4"
             />
-            <button onClick={handlePasteSubmit} className="bg-blue-500 text-white p-2 rounded mt-2">
-              Adicionar Tarefas
-            </button>
-            <button onClick={handlePasteCancel} className="bg-gray-500 text-white p-2 rounded mt-2 ml-2">
-              Cancelar
-            </button>
+            <div className="flex justify-end gap-2">
+              <button onClick={handlePasteSubmit} className="bg-blue-500 text-white px-4 py-2 rounded">
+                Adicionar Tarefas
+              </button>
+              <button onClick={handlePasteCancel} className="bg-gray-500 text-white px-4 py-2 rounded">
+                Cancelar
+              </button>
+            </div>
           </div>
         </div>
-      )}          
+      )}
+    
 
       {/* <div className='w-1/4'>  Agenda ocupa 1/4 da largura */}
       {/* <div className='w-1/4 flex flex-col'>  Coluna 2: Schedule, PropertyPane e Botão (ocupa 1/4 da largura, dispostos em coluna, ou seja, um abaixo do outro) */}
       {/* <div className='w-full'> */}
       <div className='w-full mt-4 pr-4'>
         
-      <button onClick={handleUpdateChart} className="bg-blue-100 text-white p-2 rounded">
+      <button onClick={handleUpdateChart} className="bg-green-500 text-white p-2 rounded">
         Atualizar Gráfico
       </button>
 
-        <button onClick={handleSaveButton} className="bg-blue-500 text-white p-2 rounded">
-          Salvar Alterações
-          </button>
+      <button onClick={handleSaveButton} className="bg-blue-500 text-white p-2 rounded">
+        Salvar Alterações
+      </button>
+          
+      <button onClick={handleRestoreButton} className="bg-emerald-500 text-white p-2 rounded">
+        Restaurar Dados
+      </button>
 
-        {/* PropertyPane, debaixo da Agenda, dentro da mesma coluna 2, mais o botão embaixo */}  
-         <PropertyPane title='Recursos'>
-          <TreeViewComponent 
-            id="resourceTree"
-            fields={{
-              dataSource: resources,
-              id: 'id',
-              text: 'resourceName',
-              child: 'children'
-            }}
-            //sortOrder="Ascending"
-            cssClass="resource-tree"
-            allowMultiSelection={true}
-            nodeSelected={onResourceSelected} // Adicionando o manipulador de seleção do recurso            
-          />
-        </PropertyPane> 
+      <button onClick={updateOrderField} className="bg-blue-500 text-white p-2 rounded">
+        Atualizar Ordem
+      </button>
+
+      {/*Add a new div to store both PropertyPane and ChartComponent, side by side*/}
+      <div className='flex flex-col'>
+        <div className='flex flex-row'>
           
-          {/* <button onClick={() => setSelectedResource(null)} className="bg-blue-800 text-white p-2 rounded">
-          Deselecionar recursos
-          </button> */}
-          
-    {chartData.length > 0 && (
-      <ChartComponent
-        id="resource-load-chart"
-        primaryXAxis={{ valueType: 'Category', title: 'Recurso' }}
-        primaryYAxis={{ title: 'Horas (por semana)' }}
-        legendSettings={{ visible: true }}
-        tooltip={{ enable: true }}
-      >
-        <Inject services={[ColumnSeries, Legend, Tooltip, Category]} />
-        <SeriesCollectionDirective>
-          <SeriesDirective
-            dataSource={chartData}
-            xName="recurso"
-            yName="semana1"
-            name="Semana 1"
-            type="Column"
-          />
-          <SeriesDirective
-            dataSource={chartData}
-            xName="recurso"
-            yName="semana2"
-            name="Semana 2"
-            type="Column"
-          />
-          <SeriesDirective
-            dataSource={chartData}
-            xName="recurso"
-            yName="semana3"
-            name="Semana 3"
-            type="Column"
-          />
-          <SeriesDirective
-            dataSource={chartData}
-            xName="recurso"
-            yName="semana4"
-            name="Semana 4"
-            type="Column"
-          />
-        </SeriesCollectionDirective>
-      </ChartComponent>
-    )}        
+          {/* PropertyPane, debaixo da Agenda, dentro da mesma coluna 2, mais o botão embaixo */}  
+          <PropertyPane title='Recursos'>
+            <TreeViewComponent 
+              id="resourceTree"
+              fields={{
+                dataSource: resources,
+                id: 'id',
+                text: 'resourceName',
+                child: 'children'
+              }}
+              //sortOrder="Ascending"
+              cssClass="resource-tree"
+              allowMultiSelection={true}
+              nodeSelected={onResourceSelected} // Adicionando o manipulador de seleção do recurso            
+            />
+          </PropertyPane> 
+            
+            {/* <button onClick={() => setSelectedResource(null)} className="bg-blue-800 text-white p-2 rounded">
+            Deselecionar recursos
+            </button> */}
+            
+          {chartData.length > 0 && (
+            <ChartComponent
+              id="resource-load-chart"
+              primaryXAxis={{ valueType: 'Category', title: 'Recurso' }}
+              primaryYAxis={{ title: 'Horas (por semana)' }}
+              legendSettings={{ visible: true }}
+              tooltip={{ enable: true }}
+            >
+              <Inject services={[ColumnSeries, Legend, Tooltip, Category]} />
+              <SeriesCollectionDirective>
+                <SeriesDirective
+                  dataSource={chartData}
+                  xName="recurso"
+                  yName="semana1"
+                  name="Semana 1"
+                  type="Column"
+                />
+                <SeriesDirective
+                  dataSource={chartData}
+                  xName="recurso"
+                  yName="semana2"
+                  name="Semana 2"
+                  type="Column"
+                />
+                <SeriesDirective
+                  dataSource={chartData}
+                  xName="recurso"
+                  yName="semana3"
+                  name="Semana 3"
+                  type="Column"
+                />
+                <SeriesDirective
+                  dataSource={chartData}
+                  xName="recurso"
+                  yName="semana4"
+                  name="Semana 4"
+                  type="Column"
+                />
+              </SeriesCollectionDirective>
+            </ChartComponent>
+          )}        
+        </div>
+      </div>
 
       </div>
     

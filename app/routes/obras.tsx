@@ -49,7 +49,18 @@ export const loader = async () => {
 
 export default function Obras() {  
   const { obras, clientes } = useLoaderData<typeof loader>();
-  console.log(obras[0].data_inicio);
+  //console.log(obras[0].data_inicio);
+
+  const obrasComNomeCliente = obras.map(obra => {
+    // Encontre o cliente correspondente à obra atual com base no id_cliente
+    const clienteCorrespondente = clientes.find(cliente => cliente.id_cliente === obra.id_cliente);
+    
+    // Retorne um novo objeto com os dados da obra e o nome do cliente, se encontrado
+    return {
+        ...obra, // Espalha as propriedades da obra
+        nome_cliente: clienteCorrespondente ? clienteCorrespondente.nome_cliente : null // Adiciona o nome_cliente, ou null se não encontrado
+    };
+});
   
   const commands = [
     { 
@@ -158,7 +169,7 @@ const dropDownEditParams: IEditCell = {
     <div>
       <h1 className="text-2xl font-bold mb-6">Gestão de Obras</h1>
       <GridComponent
-        dataSource={obras}
+        dataSource={obrasComNomeCliente}
         allowPaging={true}
         allowSorting={true}
         pageSettings={{ pageSize: 16 }}
@@ -170,7 +181,7 @@ const dropDownEditParams: IEditCell = {
           <ColumnDirective field="cod_obra" headerText="Código" textAlign="Center" isPrimaryKey={true}/>
           <ColumnDirective field="nome_obra" width="350" headerText="Nome" textAlign="Left" />
           
-          <ColumnDirective field="id_cliente" 
+          <ColumnDirective field="nome_cliente" 
               editType='dropdownedit' headerText="Cliente" textAlign="Center"
               edit={dropDownEditParams} />
           

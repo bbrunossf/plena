@@ -16,8 +16,8 @@ export default function Sidebar() {
     { to: '/gantt2', label: 'Cronograma' },
     { to: '/atualizaHoras', label: 'Atualizar horas extras' },
     { to: '/changepassword', label: 'Alterar senha', className: 'text-red-500' },
-	  { to: '/converter2', label: 'Conversor de Datas' },
-    { to: '/tutorial_conversor', label: 'Tutorial de Conversão de Datas' },
+//	  { to: '/converter2', label: 'Conversor de Datas' },
+//    { to: '/tutorial_conversor', label: 'Tutorial de Conversão de Datas' },
     
   ];
 

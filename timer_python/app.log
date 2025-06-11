@@ -1,0 +1,16 @@
+2025-06-11 09:07:37,202 - INFO - Registro efetuado: projeto_id=211, task_id=9, category_id=5
+2025-06-11 09:10:55,849 - INFO - Registro efetuado: projeto_id=211, task_id=9, category_id=5
+2025-06-11 09:55:15,889 - WARNING - Seleção inválida: projeto_id=None, task_id=5, category_id=4
+2025-06-11 09:55:18,593 - WARNING - Seleção inválida: projeto_id=None, task_id=5, category_id=4
+2025-06-11 09:58:29,558 - WARNING - Seleção inválida: projeto_id=None, task_id=5, category_id=4
+2025-06-11 10:10:41,469 - INFO - Registro efetuado: projeto_id=211, task_id=3, category_id=1
+2025-06-11 10:12:10,315 - INFO - Registro efetuado: projeto_id=8, task_id=2, category_id=1
+2025-06-11 10:21:54,893 - ERROR - Erro de PostgreSQL ao conectar: Can't create a connection to host 192.168.15.7 and port 5432 (timeout is None and source_address is None).
+2025-06-11 10:21:54,895 - ERROR - Erro ao executar query: Can't create a connection to host 192.168.15.7 and port 5432 (timeout is None and source_address is None).
+2025-06-11 10:21:54,895 - ERROR - Erro ao verificar tabelas: Can't create a connection to host 192.168.15.7 and port 5432 (timeout is None and source_address is None).
+2025-06-11 10:21:54,897 - ERROR - Erro de PostgreSQL ao conectar: Can't create a connection to host 192.168.15.7 and port 5432 (timeout is None and source_address is None).
+2025-06-11 10:21:54,897 - ERROR - Erro ao executar query: Can't create a connection to host 192.168.15.7 and port 5432 (timeout is None and source_address is None).
+2025-06-11 10:21:54,897 - ERROR - Erro ao verificar tabelas: Can't create a connection to host 192.168.15.7 and port 5432 (timeout is None and source_address is None).
+2025-06-11 10:21:54,899 - ERROR - Erro de PostgreSQL ao conectar: Can't create a connection to host 192.168.15.7 and port 5432 (timeout is None and source_address is None).
+2025-06-11 10:21:54,899 - ERROR - Erro ao executar query: Can't create a connection to host 192.168.15.7 and port 5432 (timeout is None and source_address is None).
+2025-06-11 10:21:54,899 - ERROR - Erro ao verificar tabelas: Can't create a connection to host 192.168.15.7 and port 5432 (timeout is None and source_address is None).

@@ -23,6 +23,7 @@ export async function loader() {
     Predecessor: task.predecessor,    
     notes: task.notes,
     order: task.order,
+    isPaused: task.isPaused,
     ////Resources: task.taskResources.taskResourceId // Já vem como um array de IDs
     // Mapeando taskResources para extrair os taskResourceId como um array
     Resources: task.taskResources.map((resource: any) => resource.taskResourceId)
@@ -83,6 +84,7 @@ export const action: ActionFunction = async ({ request }) => {
           parentId: task.parentId !== null ? task.parentId.toString() : null,
           notes: task.notes,
           order: task.order, //se a tarefa foi colada, ela tem o order definido
+          isPaused: task.isPaused,
         };
         //check: exibir o campo de notas, para conferir
         //console.log("Notas:", task.notes);
