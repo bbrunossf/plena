@@ -15,6 +15,7 @@ export async function getTasks() {
       notes: true,
       order: true,
       isPaused: true,
+      dataEntrega: true,
       taskResources: {
         select: {
           taskResourceId: true

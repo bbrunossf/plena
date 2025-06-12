@@ -7,6 +7,7 @@ import { useLoaderData } from '@remix-run/react'
 import { useRef, useEffect } from 'react';
 
 import '~/custom.css';
+import '~/indicators.css';
 
 import '@syncfusion/ej2-base/styles/material.css';
 import '@syncfusion/ej2-buttons/styles/material.css';
@@ -28,7 +29,9 @@ import '@syncfusion/ej2-richtexteditor/styles/material.css';
 
 import { GanttComponent } from '@syncfusion/ej2-react-gantt'
 //import { DataManager, WebApiAdaptor } from '@syncfusion/ej2-data'
-import { ColumnsDirective, ColumnDirective, Inject, Selection, AddDialogFieldsDirective, AddDialogFieldDirective, EditDialogFieldsDirective, EditDialogFieldDirective, RowDD, ZoomTimelineSettings, UndoRedo } from '@syncfusion/ej2-react-gantt';
+import { ColumnsDirective, ColumnDirective, Inject, Selection, AddDialogFieldsDirective, AddDialogFieldDirective, 
+  EditDialogFieldsDirective, EditDialogFieldDirective, RowDD, ZoomTimelineSettings, UndoRedo, 
+  HolidaysDirective, HolidayDirective, EventMarkersDirective, EventMarkerDirective } from '@syncfusion/ej2-react-gantt';
 import { Edit, Toolbar, ToolbarItem } from '@syncfusion/ej2-react-gantt';
 import { DayMarkers, ContextMenu, Reorder, ColumnMenu, Filter, Sort } from '@syncfusion/ej2-react-gantt';
 import { DropDownList } from '@syncfusion/ej2-react-dropdowns';
@@ -94,6 +97,7 @@ export async function loader() {
     notes: task.notes,
     order: task.order,
     isPaused: task.isPaused , //adicionar no banco de dados
+    indicators: task.dataEntrega || [], // Se for null, usar array vazio,
     ////Resources: task.taskResources.taskResourceId // Já vem como um array de IDs
     // Mapeando taskResources para extrair os taskResourceId como um array
     Resources: task.taskResources.map((resource: any) => resource.taskResourceId)
@@ -125,68 +129,110 @@ export async function loader() {
 
 
 //função para o grafico de horas por recurso
-function agruparHorasPorRecurso(tasks: any[], resources: any[]) {
+interface Resource {
+  resourceName: string;
+}
+
+interface Task {
+  StartDate: string;
+  EndDate: string;
+  Resources: Resource[];
+}
+
+function agruparHorasPorRecurso(tasks: Task[], resources: Resource[]) {
+  const horasPorSemanal: { [key: string]: { [key: string]: number } } = {};
   const hoje = new Date();
-  const semanas = [0, 1, 2, 3].map((i) => {
-    const inicio = new Date(hoje);
-    inicio.setDate(hoje.getDate() + i * 7);
+
+  // Encontra o domingo anterior ou igual à data atual
+  const primeiroDomingo = new Date(hoje);
+  primeiroDomingo.setDate(hoje.getDate() - hoje.getDay()); // domingo = 0
+
+  // Define as 4 semanas de calendário (domingo a sábado)
+  const semanas = [0, 1, 2, 3].map(i => {
+    const inicio = new Date(primeiroDomingo);
+    inicio.setDate(primeiroDomingo.getDate() + i * 7); // início da semana i
     const fim = new Date(inicio);
-    fim.setDate(inicio.getDate() + 6);
+    fim.setDate(inicio.getDate() + 6); // sábado da mesma semana
     return { inicio, fim };
   });
 
-  const cargaPorRecurso: Record<string, number[]> = {};
-
-  resources.forEach((recurso) => {       
-    cargaPorRecurso[recurso.id] = [0, 0, 0, 0]; //representa as 4 semanas    
+  // Inicializa estrutura
+  semanas.forEach(semana => {
+    const semanaChave = semana.inicio.toISOString().split('T')[0];
+    horasPorSemanal[semanaChave] = {};
+    resources.forEach(recurso => {
+      horasPorSemanal[semanaChave][recurso.resourceName] = 0;
+    });
   });
 
-  for (const tarefa of tasks) {
-    const inicioTarefa = new Date(tarefa.StartDate);
-    const fimTarefa = new Date(tarefa.EndDate);
-    const duracao = Number(tarefa.Duration) || 0;
-    const recursos = tarefa.Resources || [];
+  // Itera sobre as tarefas
+  tasks.forEach(tarefa => {
+    const dataInicio = new Date(tarefa.StartDate);
+    const dataFim = new Date(tarefa.EndDate);
 
-    // Distribui a duração da tarefa proporcionalmente entre as semanas em que ela ocorre
-    semanas.forEach((semana, index) => {
-      const intersecaoInicio = new Date(Math.max(inicioTarefa.getTime(), semana.inicio.getTime()));
-      const intersecaoFim = new Date(Math.min(fimTarefa.getTime(), semana.fim.getTime()));
+    const inicioTarefa = new Date(dataInicio.getFullYear(), dataInicio.getMonth(), dataInicio.getDate());
+    const fimTarefa = new Date(dataFim.getFullYear(), dataFim.getMonth(), dataFim.getDate());
 
-      if (intersecaoInicio <= intersecaoFim) {
-        const diasNaSemana = (intersecaoFim.getTime() - intersecaoInicio.getTime()) / (1000 * 60 * 60 * 24) + 1;
-        const diasTotais = (fimTarefa.getTime() - inicioTarefa.getTime()) / (1000 * 60 * 60 * 24) + 1;
-        const proporcao = diasNaSemana / diasTotais;
-        const cargaParcial = proporcao * duracao;
+    const diasUteis = calcularDiasUteis(inicioTarefa, fimTarefa);
+    const cargaTotal = diasUteis * 8;
 
-        // for (const recursoId of recursos) {
-        //   cargaPorRecurso[recursoId][index] += cargaParcial;
-        // }
-        for (const recursoId of recursos) {
-          //console.log("recursoId:", recursoId);
-          if (cargaPorRecurso[recursoId.id]) {
-            cargaPorRecurso[recursoId.id][index] += cargaParcial;
-          } else {
-            console.warn(`Recurso com ID ${recursoId} não encontrado na lista de recursos.`);
+    if (tarefa.Resources && tarefa.Resources.length > 0) {
+      const recurso = tarefa.Resources[0].resourceName;
+
+      semanas.forEach(semana => {
+        const semanaChave = semana.inicio.toISOString().split('T')[0];
+        if (inicioTarefa <= semana.fim && fimTarefa >= semana.inicio) {
+          const intersecaoInicio = new Date(Math.max(inicioTarefa.getTime(), semana.inicio.getTime()));
+          const intersecaoFim = new Date(Math.min(fimTarefa.getTime(), semana.fim.getTime()));
+
+          const diasNaSemana = calcularDiasUteis(intersecaoInicio, intersecaoFim);
+          if (diasNaSemana > 0) {
+            const proporcaoHoras = (diasNaSemana / diasUteis) * cargaTotal;
+            horasPorSemanal[semanaChave][recurso] += proporcaoHoras;
           }
         }
-      }
-    });
-  }
+      });
+    }
+  });
 
-  // Formata os dados para o ChartComponent
-  const resultado = resources.map((recurso) => {
-    const [sem1, sem2, sem3, sem4] = cargaPorRecurso[recurso.id];
+  // Formata o resultado
+  const resultado = resources.map(recurso => {
+    const horasSemana = semanas.map(semana => {
+      const semanaChave = semana.inicio.toISOString().split('T')[0];
+      return horasPorSemanal[semanaChave][recurso.resourceName] || 0;
+    });
     return {
       recurso: recurso.resourceName,
-      semana1: sem1,
-      semana2: sem2,
-      semana3: sem3,
-      semana4: sem4,
+      semana1: horasSemana[0],
+      semana2: horasSemana[1],
+      semana3: horasSemana[2],
+      semana4: horasSemana[3],
     };
   });
 
   return resultado;
 }
+
+function calcularDiasUteis(inicio: Date, fim: Date): number {
+  let count = 0;
+  let currentDate = new Date(inicio);
+
+  while (currentDate <= fim) {
+    const dia = currentDate.getDay();
+    const dataISO = currentDate.toISOString().split('T')[0];
+
+    const ehFeriado = feriados.includes(dataISO);
+
+    if (dia !== 0 && dia !== 6 && !ehFeriado) {
+      count++;
+    }
+
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+
+  return count;
+}
+
 
 
 
@@ -211,7 +257,7 @@ export default function GanttRoute() {
     
     // Usar a função agruparHorasPorRecurso para processar os dados corretamente
     const newChartData = agruparHorasPorRecurso(updatedData, resources);
-    console.log("Dados do gráfico atualizados:", newChartData);
+    //console.log("Dados do gráfico atualizados:", newChartData);
     
     // Atualiza o estado do gráfico
     setChartData(newChartData);
@@ -260,7 +306,7 @@ const handleSaveButton = async () => {
 
             // Atualiza o GanttComponent com os novos dados
             if (ganttInstance && result?.tasks) {
-            console.log("Dados atualizados do GanttComponent:", result.tasks);
+            //console.log("Dados atualizados do GanttComponent:", result.tasks);
             ganttInstance.dataSource = result.tasks;
             ganttInstance.refresh(); // ou ganttInstance.refreshDataSource();
             }
@@ -376,7 +422,7 @@ const handleRestoreButton = () => {
     
     const ganttInstance = ganttRef.current;
     const newData = ganttInstance?.dataSource;   
-    console.log("Dados atualizados", newData); 
+    //console.log("Dados atualizados", newData); 
     
     //salva os dados na localStorage a cada mudança (mantém os dados atualizados)
     localStorage.setItem('tasks', JSON.stringify(newData)); 
@@ -515,7 +561,8 @@ const handleRestoreButton = () => {
     //parece que tem ser o mesmo  valor colocado em ColumnDirective (mas eu não coloquei)
     //child: 'subtasks', //Não se usa o child, pois os dados são planos (flat)          
     dependency: 'Predecessor', //tem que ser 'dependency'; o da direita é o nome do campo no GanttComponent   
-    isPaused: 'isPaused' 
+    isPaused: 'isPaused',
+    indicators: 'dataEntrega', 
   }
 
   const NotesAditionalParams={
@@ -749,11 +796,12 @@ const rowDrop = async (args: any) => {
   // O GanttComponent já gerencia suas próprias atualizações
 };
 
-//niveis de zoom com o scroll do mouse
+//niveis de zoom com o scroll do mouse. Tirei.
 let customZoomingLevels: ZoomTimelineSettings[] =  [{
   topTier: { unit: 'Month', format: 'MMM, yyyy', count: 1 },
-                bottomTier: { unit: 'Week', format: 'dd MMM', count: 1 }, timelineUnitSize: 66, level: 0,
-                timelineViewMode: 'Month', weekStartDay: 0, updateTimescaleView: true, showTooltip: true
+  bottomTier: { unit: 'Week', format: 'dd MMM', count: 1 }, 
+  timelineUnitSize: 66, level: 0,
+  timelineViewMode: 'Month', weekStartDay: 0, updateTimescaleView: true, showTooltip: false
 }];
 function dataBound() {
   const ganttInstance = ganttRef.current;
@@ -764,6 +812,17 @@ const [alturaGantt, setAlturaGantt] = useState('700'); // altura padrão do Gant
 const handleHeightChange = (event) => {
   setAlturaGantt(event.target.value); // atualiza a altura com o valor do campo
 };
+
+const feriados: string[] = [
+  '2025-06-19',
+  '2025-09-07',
+  '2025-10-12',
+  '2025-11-02',
+  '2025-11-15',
+  '2025-11-20'
+];
+
+
 
 //let isPausedDropDownObj = null;
 
@@ -817,6 +876,40 @@ const handleHeightChange = (event) => {
 //   }
 // };
 
+const actionBegin = (args) => {
+  if (args.requestType === 'beforeOpenEditDialog' || args.requestType === 'beforeOpenAddDialog') {
+    // Converte o JSON do campo indicators para texto editável
+    if (args.rowData && args.rowData.dataEntrega) {
+      args.rowData.dataEntregaText = JSON.stringify(args.rowData.dataEntrega, null, 2);
+    } else {
+      // Valor padrão se não houver indicadores
+      args.rowData.dataEntregaText = JSON.stringify([{
+        date: '',
+        iconClass: 'delivery-diamond',
+        name: 'Entrega ao Cliente',
+        tooltip: 'Data de entrega programada'
+      }], null, 2);
+    }
+  }
+};
+
+const actionComplete = (args) => {
+  if (args.requestType === 'save') {
+    // Converte o texto editado de volta para JSON no campo indicators
+    try {
+      if (args.data.dataEntregaText) {
+        args.data.dataEntrega = JSON.parse(args.data.dataEntregaText);
+        // Remove o campo virtual antes de salvar no banco
+        delete args.data.dataEntregaText;
+      }
+    } catch (error) {
+      console.error('JSON inválido nos indicadores:', error);
+      // Opcionalmente, cancelar o salvamento se JSON inválido
+      args.cancel = true;
+    }
+  }
+};
+
 
 
 
@@ -850,17 +943,21 @@ const handleHeightChange = (event) => {
           id='Default'
           queryTaskbarInfo= {queryTaskbarInfo}
           rowDataBound={rowDataBound}
-          dataBound = {dataBound} 
+          //dataBound = {dataBound} //controla os niveis de zoom
           dataSource={tasks} //com os campos mapeados
           //dataSource={filteredTasks} // Usando a lista de tarefas filtradas
           resources={resources} //relaciona aqui os recursos que aparecem no campo de recursos do ganttcomponent, senão fica vazio
-          actionComplete={handleActionComplete}
+          //actionComplete={handleActionComplete} //suspenso só pra testar o outro
           rowDrop={rowDrop}
           allowFiltering={true} //Filter deve ser injetado
           enableImmutableMode = {false}
           enableCriticalPath={true}
           enableUndoRedo={true}
-          //actionBegin={handleActionBegin}
+          highlightWeekends={true}
+          
+
+          actionBegin={actionBegin}
+          actionComplete={actionComplete}
 
           resourceIDMapping='id'
           //viewType='ResourceView' //fica muito feio, agrupado por recursos
@@ -886,14 +983,14 @@ const handleHeightChange = (event) => {
           //projectEndDate={new Date(2025,8,30)}        
           
           //taskFields: define o mapa de campos para as tarefas
-          taskFields={taskFields}
+          taskFields={taskFields}          
 
           allowSelection={true}
           allowSorting={true} //classificar/ordenar as LINHAS ao clicar nos cabeçalhos das COLUNAS
           allowResizing={true} //redimensionar as COLUNAS
           allowReordering={true} //reordenar as COLUNAS
           allowRowDragAndDrop={true} //arrastar e soltar LINHAS
-          allowTaskbarDragAndDrop={true} //arrastar e soltar TAREFAS
+          //allowTaskbarDragAndDrop={true} //arrastar e soltar TAREFAS. Tirei porque tava gerando inumeros erros se ficar com o botão do mouse segurando, e travava o browser
           enableContextMenu={true}
 
           //editSettings são relacionadas a alterações nas tarefas
@@ -924,10 +1021,11 @@ const handleHeightChange = (event) => {
           </AddDialogFieldsDirective>
 
           <EditDialogFieldsDirective>
-              <EditDialogFieldDirective type='General' headerText='General' fields={['TaskID', 'TaskName', 'StartDate', 'EndDate', 'Duration', 'isPaused']}></EditDialogFieldDirective>
+              <EditDialogFieldDirective type='General' headerText='General' fields={['TaskID', 'taskName', 'StartDate', 'EndDate', 'Duration', 'isPaused']}></EditDialogFieldDirective>
               <EditDialogFieldDirective type='Dependency'></EditDialogFieldDirective>
               <EditDialogFieldDirective type='Resources'></EditDialogFieldDirective>
-              <EditDialogFieldDirective type='Notes'></EditDialogFieldDirective>                 
+              <EditDialogFieldDirective type='Notes'></EditDialogFieldDirective>                                 
+              <EditDialogFieldDirective type='Custom' headerText='Indicadores' fields={['dataEntregaText']}></EditDialogFieldDirective>  
           </EditDialogFieldsDirective>
 
         {/* Só aparecem as colunas que forem definidas aqui*/}
@@ -935,10 +1033,11 @@ const handleHeightChange = (event) => {
             < ColumnDirective field= 'TaskID'  headerText= 'TaskID'  width= '120'> </ColumnDirective> {/* tem que ter, senão ele não reconhece nenhum campo como chave primária */}
             < ColumnDirective field= 'taskName' headerText="Nome Tarefa"  width= '270' > </ColumnDirective>
             < ColumnDirective field= 'Resources'  headerText= 'Recurso'  width= '175' template= {template} > </ColumnDirective>
-            < ColumnDirective field= 'StartDate' headerText='Início' width= '150' > </ColumnDirective>
-            < ColumnDirective field= 'EndDate' headerText='Término' width= '150' > </ColumnDirective>
+            < ColumnDirective field= 'StartDate' headerText='Início' width= '150' editType='datetimepickeredit' format='dd/MM/yyyy HH:mm'> </ColumnDirective>
+            < ColumnDirective field= 'EndDate' headerText='Término' width= '150' editType='datetimepickeredit' format='dd/MM/yyyy HH:mm'> </ColumnDirective>
             < ColumnDirective field= 'Duration' width= '150' > </ColumnDirective>
             < ColumnDirective field= 'Progress' width= '150' > </ColumnDirective>
+            <ColumnDirective field='dataEntregaText' headerText='Indicadores (JSON)' visible={false} />
             <ColumnDirective  field= 'isPaused' headerText='Paralisada' width='150' editType='dropdownedit'
             edit={{
               params: {
@@ -950,6 +1049,16 @@ const handleHeightChange = (event) => {
               }
             }}> </ColumnDirective>
           </ColumnsDirective>
+
+          <HolidaysDirective>
+            <HolidayDirective from='19/06/2025' to='19/06/2025' label='Feriado'></HolidayDirective>
+            <HolidayDirective from='07/09/2025' to='07/09/2025' label='Feriado'></HolidayDirective>
+            <HolidayDirective from='12/10/2025' to='12/10/2025' label='Feriado'></HolidayDirective>
+            <HolidayDirective from='02/11/2025' to='02/11/2025' label='Feriado'></HolidayDirective>
+            <HolidayDirective from='15/11/2025' to='15/11/2025' label='Feriado'></HolidayDirective>
+            <HolidayDirective from='20/11/2025' to='20/11/2025' label='Feriado'></HolidayDirective>            
+          </HolidaysDirective>
+          
 
           <Inject services={[Selection, Edit, Toolbar, DayMarkers, ContextMenu, Reorder, ColumnMenu, Filter, Sort, RowDD, UndoRedo]} />
         </GanttComponent>

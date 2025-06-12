@@ -118,6 +118,7 @@ model Task {
   progress      Float?                   @default(0.0)
   predecessor   String?
   isPaused      Boolean?                 @default(false)
+  dataEntrega   Json?
   taskResources TaskResourceAssignment[]
 
   @@index([parentId], map: "parentId")
